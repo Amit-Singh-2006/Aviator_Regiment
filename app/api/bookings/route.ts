@@ -16,6 +16,7 @@ export async function POST(request: Request) {
     phone: typeof input.phone === "string" ? input.phone : "",
     email: typeof input.email === "string" ? input.email : "",
     address: typeof input.address === "string" ? input.address : "",
+    aadhaar: typeof input.aadhaar === "string" ? input.aadhaar : "",
     dgcaNumber: typeof input.dgcaNumber === "string" ? input.dgcaNumber : "",
     noRefundAccepted: input.noRefundAccepted === "true" || input.noRefundAccepted === true,
   });
