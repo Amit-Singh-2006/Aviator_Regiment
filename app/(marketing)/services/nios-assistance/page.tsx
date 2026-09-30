@@ -1,0 +1,3 @@
+import { ContentPage } from "@/src/components/content-page";
+export const metadata = { title: "NIOS Assistance" };
+export default function Page() { return <ContentPage eyebrow="Service / Education" title={<>Build the base<br /><em>for takeoff.</em></>} intro="Get structured guidance on the NIOS step as you work toward your aviation goals." sections={[{ title: "See the route", text: "Break a confusing education requirement into clear, manageable steps." }, { title: "Know your documents", text: "Prepare the information and paperwork needed for the next stage of your plan." }, { title: "Keep moving", text: "Use practical support and timely answers to avoid losing momentum." }]} cta="I need help with NIOS assistance" />; }

@@ -1,0 +1,8 @@
+"use client";
+import { FormEvent, useState } from "react";
+const milestones = ["Booking confirmed", "CX-3 assigned", "Dispatched", "In transit", "Out for delivery", "Delivered"];
+export default function TrackPage() {
+  const [searched, setSearched] = useState(false);
+  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setSearched(true); }
+  return <main className="track-page"><section className="content-hero"><div className="shell"><p className="eyebrow">Customer tracking</p><h1>Know where<br /><em>you stand.</em></h1><p>Enter your Booking ID and email to view a customer-safe delivery timeline.</p><form className="track-form" onSubmit={submit}><input aria-label="Booking ID" required placeholder="AR202609XXXX" /><input aria-label="Email address" required type="email" placeholder="Your booking email" /><button className="button button-primary">View tracking ↗</button></form></div></section>{searched && <section className="section"><div className="shell tracking-card"><div className="tracking-header"><div><p className="eyebrow">Demo tracking record</p><h2>AR202609XXXX</h2></div><span className="status-pill">In transit</span></div><div className="timeline">{milestones.map((item, index) => <div className={index < 4 ? "timeline-item complete" : "timeline-item"} key={item}><i /><div><strong>{item}</strong><p>{index < 4 ? "Updated in the demo timeline" : "Waiting for the next update"}</p></div></div>)}</div><p className="demo-note">Tracking is currently a frontend demonstration. Live verification and shipment data will be enabled after database integration.</p></div></section>}</main>;
+}

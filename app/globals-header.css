@@ -1,0 +1,18 @@
+.site-header { position: sticky; top: 0; z-index: 20; background: rgba(245,248,247,.92); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(16,43,58,.08); }
+.header-inner { width: min(1180px, calc(100% - 40px)); height: 78px; margin: auto; display: flex; align-items: center; gap: 34px; }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 11px; line-height: 1.05; letter-spacing: .06em; text-transform: uppercase; }
+.brand b { font-size: 13px; letter-spacing: 0; text-transform: none; }
+.brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--navy); color: white; font: 500 11px "DM Mono", monospace; }
+.nav { display: flex; gap: 25px; margin-left: auto; color: var(--muted); font-size: 13px; font-weight: 700; }
+.nav a:hover { color: var(--orange); }
+.header-cta { display: flex; align-items: center; gap: 10px; padding: 11px 15px; border-radius: 999px; background: var(--navy); color: white; font-size: 12px; font-weight: 800; }
+.header-cta span { color: var(--orange); font-size: 16px; }
+.menu-button { display: none; border: 0; background: transparent; font-size: 24px; color: var(--navy); }
+@media (max-width: 850px) {
+  .header-inner { width: min(100% - 28px, 1180px); }
+  .nav { display: none; position: absolute; left: 14px; right: 14px; top: 70px; padding: 18px; background: white; border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 20px 50px #102b3a1c; }
+  .nav-open { display: grid; }
+  .header-cta { margin-left: auto; }
+  .menu-button { display: block; }
+}
+@media (max-width: 500px) { .header-cta { display: none; } }

@@ -1,0 +1,4 @@
+import Link from "next/link";
+export const metadata = { title: "Aviation Careers" };
+const careers = ["Commercial Pilot", "Private Pilot", "Flight Instructor", "Airline Careers", "Defence Aviation", "Cabin Crew", "Aircraft Maintenance / Engineering", "ATC", "Ground Operations", "Other Aviation Careers"];
+export default function CareersPage() { return <main><section className="content-hero"><div className="shell"><p className="eyebrow">Careers / Find your altitude</p><h1>There is more<br /><em>than one runway.</em></h1><p>Explore aviation careers with a clearer view of the work, preparation and possibilities behind each path.</p></div></section><section className="section"><div className="shell career-grid">{careers.map((career, i) => <Link href={`/careers/${career.toLowerCase().replaceAll(" ", "-").replaceAll("/", "-")}`} className="career-card" key={career}><span>0{(i % 9) + 1}</span><h2>{career}</h2><b>↗</b></Link>)}</div></section></main>; }
