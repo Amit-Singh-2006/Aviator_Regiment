@@ -65,7 +65,7 @@ em { color: var(--orange); font-style: normal; }
 .editorial-word-4 { transform: translateX(8vw) rotate(4deg); }
 .editorial-word-text { display: inline-block; transform: translateY(115%); opacity: 0; }
 .editorial-flight-line { position: absolute; left: 9%; bottom: -.03em; width: 1.35em; height: .12em; border-bottom: .035em solid #c35b3d; border-radius: 50%; transform: rotate(-4deg) translateY(115%); opacity: 0; }
-.editorial-flight-aircraft { position: absolute; left: 2%; bottom: -.07em; color: #c35b3d; font: 400 .18em/1 "Arial", sans-serif; transform: rotate(-4deg) translateY(115%); opacity: 0; }
+.editorial-flight-aircraft { position: absolute; left: 80%; bottom: -.07em; color: #c35b3d; font: 400 .18em/1 "Arial", sans-serif; transform: rotate(-4deg) translateY(115%); opacity: 0; }
 .editorial-title.is-started .editorial-word-text { animation: editorial-word-in .9s cubic-bezier(.2,.75,.2,1) forwards; animation-delay: calc(var(--word-index) * 700ms); }
 .editorial-image { display: inline-block; width: 1.05em; height: .5em; border-radius: 999px; background-position: center; background-size: cover; transform: translateY(115%) scale(.9); opacity: 0; }
 .editorial-word-2 .editorial-image { position: absolute; right: calc(100% + .12em); top: 35%; }
