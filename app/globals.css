@@ -64,15 +64,15 @@ em { color: var(--orange); font-style: normal; }
 .editorial-word-3 { transform: translateX(-8vw) rotate(-5deg); }
 .editorial-word-4 { transform: translateX(8vw) rotate(4deg); }
 .editorial-word-text { display: inline-block; transform: translateY(115%); opacity: 0; }
-.editorial-flight-line { position: absolute; left: 9%; bottom: -.03em; width: 1.35em; height: .12em; border-bottom: .035em solid #c35b3d; border-radius: 50%; transform: rotate(-4deg) translateY(115%); opacity: 0; }
-.editorial-flight-aircraft { position: absolute; left: 80%; bottom: -.07em; color: #c35b3d; font: 400 .18em/1 "Arial", sans-serif; transform: rotate(-4deg) translateY(115%); opacity: 0; }
+.editorial-flight-line { position: absolute; left: 9%; bottom: -.03em; width: 1.35em; height: .12em; border-bottom: .035em solid #c35b3d; border-radius: 50%; transform: rotate(-4deg) translateY(115%) scaleX(0); transform-origin: left center; opacity: 0; }
+.editorial-flight-aircraft { position: absolute; left: 9%; bottom: -.07em; color: #c35b3d; font: 400 .18em/1 "Arial", sans-serif; transform: rotate(-4deg) translateY(115%); opacity: 0; }
 .editorial-title.is-started .editorial-word-text { animation: editorial-word-in .9s cubic-bezier(.2,.75,.2,1) forwards; animation-delay: calc(var(--word-index) * 700ms); }
 .editorial-image { display: inline-block; width: 1.05em; height: .5em; border-radius: 999px; background-position: center; background-size: cover; transform: translateY(115%) scale(.9); opacity: 0; }
 .editorial-word-2 .editorial-image { position: absolute; right: calc(100% + .12em); top: 35%; }
 .editorial-word-4 .editorial-image { position: absolute; bottom: calc(100% - .08em); left: 12%; width: .9em; height: .42em; }
 .editorial-title.is-started .editorial-image { animation: editorial-image-in .9s cubic-bezier(.2,.75,.2,1) forwards; animation-delay: calc(var(--word-index) * 700ms + 90ms); }
-.editorial-title.is-started .editorial-flight-line { animation: editorial-line-in .9s cubic-bezier(.2,.75,.2,1) forwards; animation-delay: calc(var(--word-index) * 700ms + 140ms); }
-.editorial-title.is-started .editorial-flight-aircraft { animation: editorial-line-in .9s cubic-bezier(.2,.75,.2,1) forwards; animation-delay: calc(var(--word-index) * 700ms + 220ms); }
+.editorial-title.is-started .editorial-flight-line { animation: editorial-flight-line-in 1.6s cubic-bezier(.2,.75,.2,1) forwards; animation-delay: calc(var(--word-index) * 700ms + 140ms); }
+.editorial-title.is-started .editorial-flight-aircraft { animation: editorial-flight-aircraft-in 1.6s cubic-bezier(.2,.75,.2,1) forwards; animation-delay: calc(var(--word-index) * 700ms + 140ms); }
 .editorial-image-runway { background-image: linear-gradient(135deg, #7e523c66, #10191dcc), url("/images/Pasted%20image%203.jpeg"); }
 .editorial-image-sky { background-image: linear-gradient(135deg, #c45d3d33, #202b3d66), url("/images/Pasted%20image%202.jpeg"); }
 .editorial-footer { display: flex; align-items: end; justify-content: space-between; gap: 30px; max-width: 850px; margin-top: 70px; padding-top: 22px; border-top: 1px solid #152d3833; }
@@ -86,6 +86,8 @@ em { color: var(--orange); font-style: normal; }
 @keyframes editorial-word-in { to { transform: translateY(0); opacity: 1; } }
 @keyframes editorial-image-in { to { transform: translateY(0) scale(1); opacity: 1; } }
 @keyframes editorial-line-in { to { transform: rotate(-4deg) translateY(0); opacity: 1; } }
+@keyframes editorial-flight-line-in { to { transform: rotate(-4deg) translateY(0) scaleX(1); opacity: 1; } }
+@keyframes editorial-flight-aircraft-in { from { left: 9%; transform: rotate(-4deg) translateY(0); opacity: 1; } to { left: calc(9% + 1.35em - .12em); transform: rotate(-4deg) translateY(0); opacity: 1; } }
 .pillar-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); }.pillar { padding: 28px 32px 14px 0; border-right: 1px solid var(--line); }.pillar:not(:first-child) { padding-left: 28px; }.pillar:last-child { border: 0; }.pillar span { color: var(--orange); font: 12px "DM Mono", monospace; }.pillar h3 { margin: 48px 0 12px; font-size: 24px; letter-spacing: -.04em; }.pillar p { max-width: 250px; color: var(--muted); font-size: 14px; line-height: 1.7; }
 .service-feature { padding: 110px 0; }.service-grid { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 80px; }.service-feature h2 { margin: 15px 0 25px; font-size: clamp(48px, 7vw, 82px); line-height: .9; letter-spacing: -.08em; }.service-copy { max-width: 400px; margin-bottom: 34px; color: #aac0c5; line-height: 1.7; font-size: 15px; }
 .device-card { max-width: 450px; margin: auto; padding: 18px; background: #1c4150; border: 1px solid #477080; box-shadow: 25px 30px 0 #0b202b; transform: rotate(4deg); }.device-top, .device-bottom { display: flex; justify-content: space-between; color: #93b0b7; font: 10px "DM Mono", monospace; letter-spacing: .1em; }.device-screen { position: relative; display: flex; flex-direction: column; justify-content: center; min-height: 290px; margin: 16px 0; padding: 30px; overflow: hidden; background: #bfd4ce; color: var(--navy); }.screen-label { font: 11px "DM Mono", monospace; letter-spacing: .12em; }.device-screen strong { position: relative; z-index: 1; margin-top: 30px; font-size: 58px; letter-spacing: -.08em; }.screen-orbit { position: absolute; width: 300px; height: 300px; right: -80px; bottom: -130px; border: 1px solid #668c89; border-radius: 50%; }.screen-orbit:after { content: ""; position: absolute; inset: 40px; border: 1px solid #668c89; border-radius: 50%; }
@@ -116,7 +118,9 @@ em { color: var(--orange); font-style: normal; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .editorial-word-text, .editorial-image, .editorial-flight-line, .editorial-flight-aircraft { transform: none; opacity: 1; }
+  .editorial-word-text, .editorial-image { transform: none; opacity: 1; }
+  .editorial-flight-line { transform: rotate(-4deg) scaleX(1); opacity: 1; }
+  .editorial-flight-aircraft { left: calc(9% + 1.35em - .12em); transform: rotate(-4deg); opacity: 1; }
   .editorial-title.is-started .editorial-word-text, .editorial-title.is-started .editorial-image { animation: none; }
   .home-header { transition: none; }
 }
