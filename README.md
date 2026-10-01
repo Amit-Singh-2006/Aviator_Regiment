@@ -29,3 +29,17 @@ tests/
 
 The initial V1 domains are bookings, exam sessions, payments, CX-3
 assignments, shipments, returns, leads, content, news, users, and audit.
+
+## Setup
+
+```bash
+npm install
+cp .env.example .env.local   # fill in the WhatsApp, UPI and community values
+npm run dev
+```
+
+Before pushing, run `npm run lint`, `npm run typecheck` and `npm run build`.
+
+Exam sessions, prices and availability live in
+`src/modules/exam-sessions/sessions.ts` until the admin panel is connected to
+the database. Pre-filled WhatsApp messages live in `src/lib/whatsapp`.

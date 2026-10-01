@@ -10,15 +10,16 @@ export async function POST(request: Request) {
   }
 
   const input = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
+  const text = (value: unknown) => typeof value === "string" ? value : "";
   const result = validateBookingInput({
-    session: typeof input.session === "string" ? input.session : "",
-    fullName: typeof input.fullName === "string" ? input.fullName : "",
-    phone: typeof input.phone === "string" ? input.phone : "",
-    email: typeof input.email === "string" ? input.email : "",
-    address: typeof input.address === "string" ? input.address : "",
-    aadhaar: typeof input.aadhaar === "string" ? input.aadhaar : "",
-    dgcaNumber: typeof input.dgcaNumber === "string" ? input.dgcaNumber : "",
-    noRefundAccepted: input.noRefundAccepted === "true" || input.noRefundAccepted === true,
+    sessionId: text(input.sessionId),
+    fullName: text(input.fullName),
+    phone: text(input.phone),
+    email: text(input.email),
+    address: text(input.address),
+    aadhaar: text(input.aadhaar),
+    dgcaNumber: text(input.dgcaNumber),
+    termsAccepted: input.termsAccepted === "true" || input.termsAccepted === true,
   });
 
   if (!result.success) {

@@ -1,0 +1,54 @@
+import Link from "next/link";
+import { LegalPage } from "@/src/components/legal-page";
+import { pageMetadata } from "@/src/lib/seo";
+import { whatsappLink, whatsappMessages } from "@/src/lib/whatsapp";
+import { formatInr, sessionPrices } from "@/src/modules/exam-sessions/sessions";
+
+export const metadata = pageMetadata({
+  title: "Terms & Conditions",
+  description: "Terms and conditions for CX-3 rental bookings with Aviator's Regiment: pricing, booking, payment, delivery, return pickup and refunds.",
+  path: "/terms",
+});
+
+export default function TermsPage() {
+  return (
+    <LegalPage eyebrow="Legal / Terms" title={<>Terms &amp;<br /><em>Conditions.</em></>} intro="These terms apply to CX-3 rental bookings made with Aviator's Regiment. Please read them before you book." updated="2 October 2026">
+      <h2>1. The rental</h2>
+      <ul>
+        <li>Each booking is for one CX-3 for a specific DGCA examination session, for example FC OLODE 03 or FC Regular 04.</li>
+        <li>The rental price covers the entire applicable examination session or period. It is not charged per day.</li>
+        <li>Current prices are {formatInr(sessionPrices.OLODE)} for an OLODE session and {formatInr(sessionPrices.REGULAR)} for a Regular session. The price shown when you book applies.</li>
+        <li>There is no security deposit.</li>
+        <li>Sessions are subject to availability. Sessions marked sold out or unavailable cannot be booked.</li>
+      </ul>
+      <h2>2. Booking and verification</h2>
+      <ul>
+        <li>To book, you provide your full name, phone number, email address, full delivery address, Aadhaar, a passport-size photo, your DGCA Computer Number (or relevant DGCA registration number) and the examination session you are appearing for.</li>
+        <li>You must provide accurate information. We may contact you to verify your details.</li>
+        <li>Every booking receives a unique Booking ID. Please use it in all communication with us.</li>
+      </ul>
+      <h2>3. Payment</h2>
+      <ul>
+        <li>When you pay by UPI, share your payment screenshot with your Booking ID. UPI payments are verified manually.</li>
+        <li>Where online payment through a payment gateway is offered, any applicable gateway or convenience fee is shown before you pay.</li>
+        <li>Your booking is confirmed once your payment has been verified.</li>
+      </ul>
+      <h2>4. Delivery</h2>
+      <ul>
+        <li>We send the CX-3 to your delivery address by courier and share the courier name, AWB/tracking number and tracking link with you.</li>
+        <li>You can follow your booking on the <Link href="/track">Track your booking</Link> page.</li>
+      </ul>
+      <h2>5. Return</h2>
+      <ul>
+        <li>We arrange the return pickup after your examination period. You do not need to arrange the return yourself.</li>
+        <li>Please keep the CX-3 ready to hand over at the scheduled pickup.</li>
+      </ul>
+      <h2>6. Refunds</h2>
+      <p>CX-3 rental bookings are non-refundable. Please read our <Link href="/refund-policy">No-Refund Policy</Link> before you pay.</p>
+      <h2>7. Your documents and data</h2>
+      <p>Your Aadhaar, photo and DGCA details are used to verify and fulfil your booking. They are stored securely and are only accessible to authorised Aviator&apos;s Regiment administrators.</p>
+      <h2>8. Contact</h2>
+      <p>Questions about these terms? <a href={whatsappLink(whatsappMessages.general)} target="_blank" rel="noreferrer">Message us on WhatsApp</a>.</p>
+    </LegalPage>
+  );
+}

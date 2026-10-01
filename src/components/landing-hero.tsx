@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 
@@ -45,6 +46,14 @@ export function LandingHero() {
             </span>
           ))}
         </h1>
+        <div className={started ? "editorial-actions is-started" : "editorial-actions"}>
+          <Link className="button button-primary" href="/rent-cx3">
+            Rent CX-3 <span aria-hidden="true">↗</span>
+          </Link>
+          <Link className="button button-ghost" href="/services">
+            Explore Aviation Services
+          </Link>
+        </div>
       </div>
     </section>
   );

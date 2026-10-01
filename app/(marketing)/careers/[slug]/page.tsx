@@ -1,22 +1,25 @@
+import { notFound } from "next/navigation";
 import { ContentPage } from "@/src/components/content-page";
+import { WhatsAppCta } from "@/src/components/whatsapp-cta";
+import { pageMetadata } from "@/src/lib/seo";
+import { whatsappMessages } from "@/src/lib/whatsapp";
+import { careerGuideTitle, careers, findCareer } from "@/src/modules/content/careers";
 
-const titles: Record<string, string> = {
-  "commercial-pilot": "Commercial Pilot",
-  "private-pilot": "Private Pilot",
-  "flight-instructor": "Flight Instructor",
-  "airline-careers": "Airline Careers",
-  "defence-aviation": "Defence Aviation",
-  "cabin-crew": "Cabin Crew",
-  "aircraft-maintenance---engineering": "Aircraft Maintenance / Engineering",
-  "atc": "ATC",
-  "ground-operations": "Ground Operations",
-  "other-aviation-careers": "Other Aviation Careers",
-};
+// Only the careers defined in the content module exist; anything else is a 404.
+export const dynamicParams = false;
 
-export function generateStaticParams() { return Object.keys(titles).map((slug) => ({ slug })); }
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) { const { slug } = await params; return { title: titles[slug] ?? "Aviation Career" }; }
+export function generateStaticParams() { return careers.map((career) => ({ slug: career.slug })); }
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const career = findCareer(slug);
+  if (!career) return {};
+  return pageMetadata({ title: careerGuideTitle(career), description: career.summary, path: `/careers/${career.slug}` });
+}
+
 export default async function CareerPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const title = titles[slug] ?? "Aviation Career";
-  return <ContentPage eyebrow={`Career / ${title}`} title={<>A career with<br /><em>room to rise.</em></>} intro={`Explore the shape of a ${title.toLowerCase()} career, the preparation it demands and the questions worth asking before you begin.`} sections={[{ title: "What the work looks like", text: "Understand the responsibility, environment and rhythm behind this aviation pathway." }, { title: "How to prepare", text: "Build a plan around education, training, eligibility and the practical milestones ahead." }, { title: "Ask better questions", text: "Use informed guidance to compare routes and make decisions with confidence." }]} cta={`I want to explore a ${title} career`} />;
+  const career = findCareer(slug);
+  if (!career) notFound();
+  return <ContentPage eyebrow={`Careers / ${career.name}`} title={<>{career.name}<br /><em>career guide.</em></>} intro={career.summary} sections={[{ title: "What the work looks like", text: "Understand the responsibility, environment and rhythm behind this aviation pathway." }, { title: "How to prepare", text: "Build a plan around education, training, eligibility and the practical milestones ahead." }, { title: "Ask better questions", text: "Use informed guidance to compare routes and make decisions with confidence." }]} actions={<WhatsAppCta message={whatsappMessages.career(career.enquiry)} label="Ask about this career" />} />;
 }
