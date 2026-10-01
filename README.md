@@ -40,6 +40,8 @@ npm run dev
 
 Before pushing, run `npm run lint`, `npm run typecheck` and `npm run build`.
 
-Exam sessions, prices and availability live in
-`src/modules/exam-sessions/sessions.ts` until the admin panel is connected to
-the database. Pre-filled WhatsApp messages live in `src/lib/whatsapp`.
+Bookings, payments, CX-3 units, shipments, exam sessions and prices live in
+Supabase. The schema is versioned in `src/db/migrations`; after changing it,
+regenerate `src/db/database.types.ts`. Admin accounts are added by inserting the
+user's id into `public.admin_users` from the Supabase dashboard. Pre-filled
+WhatsApp messages live in `src/lib/whatsapp`.

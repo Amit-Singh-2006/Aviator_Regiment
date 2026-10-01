@@ -1,5 +1,3 @@
-import { findExamSession, isBookable } from "@/src/modules/exam-sessions/sessions";
-
 export type BookingInput = {
   sessionId: string;
   fullName: string;
@@ -58,9 +56,8 @@ export function validateBookingInput(input: Partial<BookingInput>): ValidationRe
   const aadhaar = normalizeAadhaar(input.aadhaar ?? "");
   const dgcaNumber = input.dgcaNumber?.trim() ?? "";
 
-  const session = findExamSession(sessionId);
-  if (!session) errors.sessionId = "Select a valid examination session.";
-  else if (!isBookable(session)) errors.sessionId = "This examination session is not open for booking.";
+  // Whether the session is open for booking is checked by the database.
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(sessionId)) errors.sessionId = "Select a valid examination session.";
   if (fullName.length < 2 || fullName.length > 100) errors.fullName = "Enter your full name.";
   if (!isValidPhone(phone)) errors.phone = "Enter a valid 10-digit Indian mobile number.";
   if (!isValidEmail(email)) errors.email = "Enter a valid email address.";
@@ -77,11 +74,15 @@ export function validateBookingInput(input: Partial<BookingInput>): ValidationRe
   };
 }
 
-export function validatePassportPhoto(file: { type: string; size: number } | null | undefined) {
-  if (!file || file.size === 0) return "Upload a passport-size photo.";
-  if (!PASSPORT_PHOTO_TYPES.includes(file.type)) return "Upload the photo as a JPG, PNG or WebP image.";
-  if (file.size > MAX_PASSPORT_PHOTO_BYTES) return "The photo must be 5 MB or smaller.";
+export function validateImageFile(file: { type: string; size: number } | null | undefined, missingMessage: string) {
+  if (!file || file.size === 0) return missingMessage;
+  if (!PASSPORT_PHOTO_TYPES.includes(file.type)) return "Upload the image as a JPG, PNG or WebP file.";
+  if (file.size > MAX_PASSPORT_PHOTO_BYTES) return "The image must be 5 MB or smaller.";
   return null;
+}
+
+export function validatePassportPhoto(file: { type: string; size: number } | null | undefined) {
+  return validateImageFile(file, "Upload a passport-size photo.");
 }
 
 const verhoeffMultiplication = [

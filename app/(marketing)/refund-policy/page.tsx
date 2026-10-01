@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LegalPage } from "@/src/components/legal-page";
 import { pageMetadata } from "@/src/lib/seo";
+import { TERMS_LAST_UPDATED } from "@/src/modules/bookings/terms";
 import { whatsappLink, whatsappMessages } from "@/src/lib/whatsapp";
 
 export const metadata = pageMetadata({
@@ -11,7 +12,7 @@ export const metadata = pageMetadata({
 
 export default function RefundPolicyPage() {
   return (
-    <LegalPage eyebrow="Legal / Refunds" title={<>No-Refund<br /><em>Policy.</em></>} intro="CX-3 rental bookings with Aviator's Regiment are non-refundable. Please read this policy before you pay." updated="2 October 2026">
+    <LegalPage eyebrow="Legal / Refunds" title={<>No-Refund<br /><em>Policy.</em></>} intro="CX-3 rental bookings with Aviator's Regiment are non-refundable. Please read this policy before you pay." updated={TERMS_LAST_UPDATED}>
       <h2>1. No refunds</h2>
       <p>Payments for CX-3 rental bookings are not refundable.</p>
       <h2>2. No security deposit</h2>

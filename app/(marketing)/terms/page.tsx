@@ -2,7 +2,7 @@ import Link from "next/link";
 import { LegalPage } from "@/src/components/legal-page";
 import { pageMetadata } from "@/src/lib/seo";
 import { whatsappLink, whatsappMessages } from "@/src/lib/whatsapp";
-import { formatInr, sessionPrices } from "@/src/modules/exam-sessions/sessions";
+import { TERMS_LAST_UPDATED } from "@/src/modules/bookings/terms";
 
 export const metadata = pageMetadata({
   title: "Terms & Conditions",
@@ -12,12 +12,12 @@ export const metadata = pageMetadata({
 
 export default function TermsPage() {
   return (
-    <LegalPage eyebrow="Legal / Terms" title={<>Terms &amp;<br /><em>Conditions.</em></>} intro="These terms apply to CX-3 rental bookings made with Aviator's Regiment. Please read them before you book." updated="2 October 2026">
+    <LegalPage eyebrow="Legal / Terms" title={<>Terms &amp;<br /><em>Conditions.</em></>} intro="These terms apply to CX-3 rental bookings made with Aviator's Regiment. Please read them before you book." updated={TERMS_LAST_UPDATED}>
       <h2>1. The rental</h2>
       <ul>
         <li>Each booking is for one CX-3 for a specific DGCA examination session, for example FC OLODE 03 or FC Regular 04.</li>
         <li>The rental price covers the entire applicable examination session or period. It is not charged per day.</li>
-        <li>Current prices are {formatInr(sessionPrices.OLODE)} for an OLODE session and {formatInr(sessionPrices.REGULAR)} for a Regular session. The price shown when you book applies.</li>
+        <li>Prices are set separately for OLODE and Regular sessions and are shown on the <Link href="/rent-cx3">Rent CX-3</Link> page. The price shown when you book applies.</li>
         <li>There is no security deposit.</li>
         <li>Sessions are subject to availability. Sessions marked sold out or unavailable cannot be booked.</li>
       </ul>

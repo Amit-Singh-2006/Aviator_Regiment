@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { useSearchParams } from "next/navigation";
 import { siteConfig } from "@/src/lib/site-config";
 import { whatsappLink, whatsappMessages } from "@/src/lib/whatsapp";
-import { generateBookingId } from "@/src/modules/bookings/booking-id";
-import { maskAadhaar, validateBookingInput, validatePassportPhoto } from "@/src/modules/bookings/validation";
+import { maskAadhaar, validateBookingInput, validateImageFile, validatePassportPhoto } from "@/src/modules/bookings/validation";
 import type { BookingErrors, BookingField, BookingInput } from "@/src/modules/bookings/validation";
-import { findExamSession, formatInr, getSessionPrice, isBookable, sessionStatusLabels } from "@/src/modules/exam-sessions/sessions";
+import { formatInr, isBookable, sessionStatusLabels } from "@/src/modules/exam-sessions/sessions";
+import type { ExamSession } from "@/src/modules/exam-sessions/sessions";
 
 type Step = "details" | "review" | "payment" | "pending";
+type CreatedBooking = { bookingCode: string; amountInr: number };
 
 const fieldOrder: BookingField[] = ["fullName", "phone", "email", "address", "aadhaar", "dgcaNumber", "passportPhoto", "termsAccepted"];
 
@@ -19,14 +19,25 @@ function FieldError({ field, errors }: { field: BookingField; errors: BookingErr
   return errors[field] ? <small className="field-error" id={`${field}-error`}>{errors[field]}</small> : null;
 }
 
-export function BookingForm() {
-  const sessionId = useSearchParams().get("session") ?? "";
-  const session = findExamSession(sessionId);
+async function postForm(url: string, body: FormData) {
+  try {
+    const response = await fetch(url, { method: "POST", body });
+    const result = await response.json().catch(() => ({}));
+    return { ok: response.ok, result };
+  } catch {
+    return { ok: false, result: { message: "Network error. Check your connection and try again." } };
+  }
+}
+
+export function BookingForm({ session }: { session: ExamSession | null }) {
   const [step, setStep] = useState<Step>("details");
   const [details, setDetails] = useState<BookingInput | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [errors, setErrors] = useState<BookingErrors>({});
-  const [bookingId, setBookingId] = useState("");
+  const [booking, setBooking] = useState<CreatedBooking | null>(null);
+  const [screenshot, setScreenshot] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [requestError, setRequestError] = useState("");
   const [copied, setCopied] = useState(false);
 
   if (!session || !isBookable(session)) {
@@ -36,10 +47,13 @@ export function BookingForm() {
     </div>;
   }
 
-  const price = formatInr(getSessionPrice(session));
-  const paymentMessage = whatsappLink(whatsappMessages.upiPayment(bookingId, session.name, price));
+  const bookedSession = session;
+  const price = formatInr(booking?.amountInr ?? bookedSession.priceInr);
+  const bookingId = booking?.bookingCode ?? "";
+  const paymentMessage = whatsappLink(whatsappMessages.upiPayment(bookingId, bookedSession.name, price));
 
   function goTo(next: Step) {
+    setRequestError("");
     setStep(next);
     window.scrollTo({ top: 0, behavior: "instant" });
   }
@@ -70,7 +84,7 @@ export function BookingForm() {
     const chosenPhoto = upload instanceof File && upload.size > 0 ? upload : photo;
 
     const result = validateBookingInput({
-      sessionId,
+      sessionId: bookedSession.id,
       fullName: text("fullName"),
       phone: text("phone"),
       email: text("email"),
@@ -93,8 +107,46 @@ export function BookingForm() {
 
     setDetails(result.data);
     setPhoto(chosenPhoto);
-    if (!bookingId) setBookingId(generateBookingId());
     goTo("review");
+  }
+
+  // Creates the booking on the server, which assigns the Booking ID.
+  async function confirmBooking() {
+    if (!details || !photo || submitting) return;
+    setSubmitting(true);
+    setRequestError("");
+    const body = new FormData();
+    Object.entries(details).forEach(([key, value]) => body.set(key, String(value)));
+    body.set("passportPhoto", photo);
+    const { ok, result } = await postForm("/api/bookings", body);
+    setSubmitting(false);
+    if (!ok) {
+      setRequestError(result.message ?? "We couldn't create your booking. Please try again.");
+      return;
+    }
+    setBooking({ bookingCode: result.bookingCode, amountInr: result.amountInr });
+    goTo("payment");
+  }
+
+  async function submitPaymentProof() {
+    if (!booking || !details || submitting) return;
+    const screenshotError = validateImageFile(screenshot, "Choose your payment screenshot to upload.");
+    if (screenshotError || !screenshot) {
+      setRequestError(screenshotError ?? "");
+      return;
+    }
+    setSubmitting(true);
+    setRequestError("");
+    const body = new FormData();
+    body.set("phone", details.phone);
+    body.set("screenshot", screenshot);
+    const { ok, result } = await postForm(`/api/bookings/${booking.bookingCode}/payment-proof`, body);
+    setSubmitting(false);
+    if (!ok) {
+      setRequestError(result.message ?? "We couldn't submit your screenshot. Please try again.");
+      return;
+    }
+    goTo("pending");
   }
 
   async function copyUpiId() {
@@ -107,9 +159,9 @@ export function BookingForm() {
   }
 
   if (step === "review" && details) return <div className="shell booking-layout">
-    <div className="booking-intro"><button type="button" className="back-link back-button" onClick={() => goTo("details")}>← Edit details</button><p className="eyebrow">Review / Before payment</p><h1>Check your<br /><em>flight plan.</em></h1><p>Review your session and delivery details before moving to the UPI payment instructions.</p><div className="booking-summary"><span>Booking ID (save this)</span><strong>{bookingId}</strong></div></div>
+    <div className="booking-intro"><button type="button" className="back-link back-button" onClick={() => goTo("details")} disabled={submitting}>← Edit details</button><p className="eyebrow">Review / Before payment</p><h1>Check your<br /><em>flight plan.</em></h1><p>Check your session and delivery details. Your Booking ID is created when you confirm, and you&apos;ll then see the UPI payment details.</p><div className="booking-summary"><span>Selected session</span><strong>{bookedSession.name}</strong><span>Total payable</span><strong>{price}</strong></div></div>
     <div className="review-card">
-      <div className="review-row"><span>Examination session</span><strong>{session.name}</strong></div>
+      <div className="review-row"><span>Examination session</span><strong>{bookedSession.name}</strong></div>
       <div className="review-row"><span>Session rental</span><strong>{price} for the complete session</strong></div>
       <div className="review-row"><span>Security deposit</span><strong>₹0</strong></div>
       <div className="review-row"><span>Customer</span><strong>{details.fullName}</strong></div>
@@ -121,13 +173,14 @@ export function BookingForm() {
       <div className="review-row"><span>Passport-size photo</span><strong>{photo?.name}</strong></div>
       <div className="review-row"><span>Policies</span><strong>Terms &amp; Conditions and No-Refund Policy accepted</strong></div>
       <div className="review-total"><span>Total payable</span><strong>{price}</strong></div>
-      <button type="button" className="button button-primary submit-button" onClick={() => goTo("payment")}>Continue to UPI payment <span>↗</span></button>
+      {requestError && <p className="form-error" role="alert">{requestError}</p>}
+      <button type="button" className="button button-primary submit-button" onClick={confirmBooking} disabled={submitting}>{submitting ? "Creating your booking…" : <>Confirm booking &amp; continue to payment <span>↗</span></>}</button>
       <p className="form-note">No security deposit. Rental covers the complete applicable examination session.</p>
     </div>
   </div>;
 
-  if (step === "payment") return <div className="shell booking-layout">
-    <div className="booking-intro"><button type="button" className="back-link back-button" onClick={() => goTo("review")}>← Back to review</button><p className="eyebrow">Payment / UPI</p><h1>Complete your<br /><em>payment.</em></h1><p>Use the UPI ID or QR code below, then share your payment screenshot with your Booking ID for manual verification.</p><div className="booking-summary"><span>Booking ID (save this)</span><strong>{bookingId}</strong><span>Amount payable</span><strong>{price}</strong></div></div>
+  if (step === "payment" && booking) return <div className="shell booking-layout">
+    <div className="booking-intro"><p className="eyebrow">Payment / UPI</p><h1>Complete your<br /><em>payment.</em></h1><p>Your booking is created. Pay using the UPI ID or QR code, then upload your payment screenshot so we can verify it.</p><div className="booking-summary"><span>Booking ID (save this)</span><strong>{bookingId}</strong><span>Amount payable</span><strong>{price}</strong></div></div>
     <div className="upi-card">
       <div className="upi-amount"><span>Pay exactly</span><strong>{price}</strong></div>
       {siteConfig.upiQrImage
@@ -139,32 +192,33 @@ export function BookingForm() {
         ? <><p className="upi-label">UPI ID · {siteConfig.upiPayeeName}</p><button type="button" className="upi-id" onClick={copyUpiId}>{siteConfig.upiId} <span aria-live="polite">{copied ? "Copied" : "Copy"}</span></button></>
         : <p className="upi-note">Our UPI ID will be shared with you on WhatsApp along with your Booking ID.</p>}
       <p className="upi-note">Add <b>{bookingId}</b> as the payment note so we can match your transfer quickly.</p>
-      <label className="upload-label">Payment screenshot <input type="file" accept="image/png,image/jpeg,image/webp" /><small>Demo only — secure upload is enabled after storage integration. Share the screenshot on WhatsApp for now.</small></label>
-      <div className="upi-actions"><button type="button" className="button button-primary submit-button" onClick={() => goTo("pending")}>I&apos;ve completed payment</button><a className="button button-ghost submit-button" href={paymentMessage} target="_blank" rel="noreferrer">Share screenshot on WhatsApp ↗</a></div>
+      <label className="upload-label">Payment screenshot<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { setScreenshot(event.target.files?.[0] ?? null); setRequestError(""); }} /><small>JPG, PNG or WebP, up to 5 MB. Stored privately and only seen by our team.</small></label>
+      {requestError && <p className="form-error upi-error" role="alert">{requestError}</p>}
+      <div className="upi-actions"><button type="button" className="button button-primary submit-button" onClick={submitPaymentProof} disabled={submitting}>{submitting ? "Uploading…" : "Submit payment screenshot"}</button><a className="button button-ghost submit-button" href={paymentMessage} target="_blank" rel="noreferrer">Share screenshot on WhatsApp ↗</a></div>
     </div>
   </div>;
 
-  if (step === "pending") return <div className="booking-success shell">
+  if (step === "pending" && booking) return <div className="booking-success shell">
     <p className="eyebrow">Payment submitted</p><h1>We&apos;ll verify<br /><em>your transfer.</em></h1>
     <div className="booking-summary"><span>Your Booking ID (save this)</span><strong>{bookingId}</strong><span>Payment status</span><strong>Pending verification</strong></div>
-    <p>Share your payment screenshot on WhatsApp with your Booking ID so we can verify it. This demo does not store files or create a permanent booking until the database and private storage are connected.</p>
-    <div className="booking-success-actions"><a className="button button-primary" href={paymentMessage} target="_blank" rel="noreferrer">Share screenshot on WhatsApp ↗</a><Link className="button button-ghost" href={`/track?booking=${bookingId}`}>Track your booking</Link></div>
+    <p>We&apos;ve received your payment screenshot. Once we verify it, your booking is confirmed and you can follow the CX-3 delivery from the tracking page.</p>
+    <div className="booking-success-actions"><Link className="button button-primary" href={`/track?booking=${bookingId}`}>Track your booking</Link><a className="button button-ghost" href={whatsappLink(whatsappMessages.bookingUpdate(bookingId))} target="_blank" rel="noreferrer">Message us on WhatsApp ↗</a></div>
   </div>;
 
   return <div className="shell booking-layout">
-    <div className="booking-intro"><Link className="back-link" href="/rent-cx3">← Back to sessions</Link><p className="eyebrow">Rent CX-3 / Booking</p><h1>Let&apos;s get you<br /><em>ready to fly.</em></h1><p>Tell us where to send your CX-3. We&apos;ll confirm your session and guide you through payment.</p><div className="booking-summary"><span>Selected session</span><strong>{session.name}</strong><span>Session rental</span><strong>{price}</strong><span>Security deposit</span><strong>₹0</strong></div></div>
+    <div className="booking-intro"><Link className="back-link" href="/rent-cx3">← Back to sessions</Link><p className="eyebrow">Rent CX-3 / Booking</p><h1>Let&apos;s get you<br /><em>ready to fly.</em></h1><p>Tell us where to send your CX-3. We&apos;ll confirm your session and guide you through payment.</p><div className="booking-summary"><span>Selected session</span><strong>{bookedSession.name}</strong><span>Session rental</span><strong>{price}</strong><span>Security deposit</span><strong>₹0</strong></div></div>
     <form className="booking-form" onSubmit={submitDetails} onChange={clearError} noValidate>
       <label>Full name<input name="fullName" autoComplete="name" maxLength={100} defaultValue={details?.fullName} placeholder="As on your DGCA records" {...describe("fullName")} /><FieldError field="fullName" errors={errors} /></label>
       <div className="form-row"><label>Phone number<input name="phone" type="tel" autoComplete="tel" inputMode="tel" maxLength={16} defaultValue={details?.phone} placeholder="10-digit mobile number" {...describe("phone")} /><FieldError field="phone" errors={errors} /></label><label>Email address<input name="email" type="email" autoComplete="email" maxLength={254} defaultValue={details?.email} placeholder="you@example.com" {...describe("email")} /><FieldError field="email" errors={errors} /></label></div>
       <label>Full delivery address<textarea name="address" rows={4} autoComplete="street-address" maxLength={500} defaultValue={details?.address} placeholder="House / street, city, state, PIN code" {...describe("address")} /><FieldError field="address" errors={errors} /></label>
-      <label>Aadhaar number<input name="aadhaar" inputMode="numeric" autoComplete="off" maxLength={14} defaultValue={details?.aadhaar} placeholder="12-digit Aadhaar number" {...describe("aadhaar")} /><small>Required for verification. It will be stored securely once private storage is connected.</small><FieldError field="aadhaar" errors={errors} /></label>
+      <label>Aadhaar number<input name="aadhaar" inputMode="numeric" autoComplete="off" maxLength={14} defaultValue={details?.aadhaar} placeholder="12-digit Aadhaar number" {...describe("aadhaar")} /><small>Required for verification. Stored securely and only visible to authorised Aviator&apos;s Regiment staff.</small><FieldError field="aadhaar" errors={errors} /></label>
       <label>DGCA computer / registration number<input name="dgcaNumber" maxLength={40} defaultValue={details?.dgcaNumber} placeholder="Your relevant DGCA number" {...describe("dgcaNumber")} /><FieldError field="dgcaNumber" errors={errors} /></label>
-      <label className="upload-label">Passport-size photo<input name="passportPhoto" type="file" accept="image/png,image/jpeg,image/webp" {...describe("passportPhoto")} /><small>{photo ? `Selected: ${photo.name}. Choose a new file to replace it.` : "JPG, PNG or WebP, up to 5 MB. Secure storage will be enabled with the database integration."}</small><FieldError field="passportPhoto" errors={errors} /></label>
+      <label className="upload-label">Passport-size photo<input name="passportPhoto" type="file" accept="image/png,image/jpeg,image/webp" {...describe("passportPhoto")} /><small>{photo ? `Selected: ${photo.name}. Choose a new file to replace it.` : "JPG, PNG or WebP, up to 5 MB. Stored privately."}</small><FieldError field="passportPhoto" errors={errors} /></label>
       <label className="checkbox-label"><input name="termsAccepted" type="checkbox" defaultChecked={details?.termsAccepted} {...describe("termsAccepted")} /><span>I agree to the <Link href="/terms" target="_blank">Terms &amp; Conditions</Link> and understand that CX-3 rental bookings are non-refundable under the <Link href="/refund-policy" target="_blank">No-Refund Policy</Link>.</span></label>
       <FieldError field="termsAccepted" errors={errors} />
       {Object.keys(errors).length > 0 && <p className="form-error" role="alert">Please correct the highlighted details.</p>}
       <button className="button button-primary submit-button">Review booking <span>↗</span></button>
-      <p className="form-note">Demo mode: no personal data or documents are persisted yet. We do not collect a security deposit.</p>
+      <p className="form-note">We do not collect a security deposit.</p>
     </form>
   </div>;
 }

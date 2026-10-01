@@ -1,6 +1,6 @@
-import { Suspense } from "react";
 import { BookingForm } from "@/src/components/booking-form";
 import { pageMetadata } from "@/src/lib/seo";
+import { findSession } from "@/src/modules/exam-sessions/queries";
 
 export const metadata = pageMetadata({
   title: "Book your CX-3",
@@ -9,6 +9,8 @@ export const metadata = pageMetadata({
   noIndex: true,
 });
 
-export default function BookingPage() {
-  return <main className="booking-page"><Suspense fallback={<div className="shell booking-success"><p className="eyebrow">Loading booking</p><h1>Preparing your<br /><em>flight path.</em></h1></div>}><BookingForm /></Suspense></main>;
+export default async function BookingPage({ searchParams }: { searchParams: Promise<{ session?: string }> }) {
+  const { session: sessionId } = await searchParams;
+  const session = sessionId ? await findSession(sessionId) : null;
+  return <main className="booking-page"><BookingForm session={session} /></main>;
 }
