@@ -7,7 +7,7 @@ import type { CSSProperties } from "react";
 const words = [
   { text: "Find", image: null },
   { text: "your", image: "runway" },
-  { text: "flight", image: null },
+  { text: "Flight", image: null },
   { text: "path.", image: "sky" },
 ];
 
@@ -36,6 +36,7 @@ export function LandingHero() {
                 <span className={`editorial-image editorial-image-${word.image}`} aria-hidden="true" />
               ) : null}
               <span className="editorial-word-text">{word.text}</span>
+              {index === 2 ? <span className="editorial-flight-line" aria-hidden="true" /> : null}
             </span>
           ))}
         </h1>
