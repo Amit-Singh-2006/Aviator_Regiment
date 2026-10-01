@@ -5,10 +5,10 @@ import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 
 const words = [
-  { text: "Find", image: "runway" },
-  { text: "your", image: null },
-  { text: "flight", image: "sky" },
-  { text: "path.", image: null },
+  { text: "Find", image: null },
+  { text: "your", image: "runway" },
+  { text: "flight", image: null },
+  { text: "path.", image: "sky" },
 ];
 
 export function LandingHero() {
@@ -27,7 +27,11 @@ export function LandingHero() {
         <p className="editorial-kicker">Aviation, made human / India</p>
         <h1 id="landing-title" className={started ? "editorial-title is-started" : "editorial-title"}>
           {words.map((word, index) => (
-            <span className="editorial-word" style={{ "--word-index": index } as CSSProperties} key={word.text}>
+            <span
+              className={`editorial-word editorial-word-${index + 1}`}
+              style={{ "--word-index": index } as CSSProperties}
+              key={word.text}
+            >
               {word.image ? (
                 <span className={`editorial-image editorial-image-${word.image}`} aria-hidden="true" />
               ) : null}
