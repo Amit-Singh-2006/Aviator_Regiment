@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 
@@ -24,7 +23,6 @@ export function LandingHero() {
     <section className="editorial-hero" aria-labelledby="landing-title">
       <div className="editorial-hero-glow" aria-hidden="true" />
       <div className="editorial-hero-inner">
-        <p className="editorial-kicker">Aviation, made human / India</p>
         <h1 id="landing-title" className={started ? "editorial-title is-started" : "editorial-title"}>
           {words.map((word, index) => (
             <span
@@ -40,12 +38,6 @@ export function LandingHero() {
             </span>
           ))}
         </h1>
-        <div className="editorial-footer">
-          <p>Guidance, access and practical support for every stage of your aviation journey.</p>
-          <Link className="editorial-cta" href="/rent-cx3">
-            Rent CX-3 <span aria-hidden="true">↗</span>
-          </Link>
-        </div>
       </div>
     </section>
   );
