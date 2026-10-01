@@ -1,12 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (pathname !== "/") {
+      setRevealed(true);
+      return;
+    }
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => setRevealed(true), reducedMotion ? 0 : 2900);
+    return () => window.clearTimeout(timer);
+  }, [pathname]);
+
   return (
-    <header className="site-header">
+    <header className={pathname === "/" ? `site-header home-header ${revealed ? "header-revealed" : ""}` : "site-header"}>
       <div className="header-inner">
         <Link className="brand" href="/">
           <span className="brand-mark">AR</span>

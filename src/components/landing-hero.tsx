@@ -1,0 +1,47 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
+
+const words = [
+  { text: "Find", image: "runway" },
+  { text: "your", image: null },
+  { text: "flight", image: "sky" },
+  { text: "path.", image: null },
+];
+
+export function LandingHero() {
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => setStarted(true), reducedMotion ? 0 : 250);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  return (
+    <section className="editorial-hero" aria-labelledby="landing-title">
+      <div className="editorial-hero-glow" aria-hidden="true" />
+      <div className="editorial-hero-inner">
+        <p className="editorial-kicker">Aviation, made human / India</p>
+        <h1 id="landing-title" className={started ? "editorial-title is-started" : "editorial-title"}>
+          {words.map((word, index) => (
+            <span className="editorial-word" style={{ "--word-index": index } as CSSProperties} key={word.text}>
+              {word.image ? (
+                <span className={`editorial-image editorial-image-${word.image}`} aria-hidden="true" />
+              ) : null}
+              <span className="editorial-word-text">{word.text}</span>
+            </span>
+          ))}
+        </h1>
+        <div className="editorial-footer">
+          <p>Guidance, access and practical support for every stage of your aviation journey.</p>
+          <Link className="editorial-cta" href="/rent-cx3">
+            Rent CX-3 <span aria-hidden="true">↗</span>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}

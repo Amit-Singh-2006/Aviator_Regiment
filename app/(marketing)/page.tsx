@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LandingHero } from "@/src/components/landing-hero";
 
 const pillars = [
   ["01", "Clearer direction", "The right information, support and tools for every stage of your aviation journey."],
@@ -9,7 +10,8 @@ const pillars = [
 export default function HomePage() {
   return (
     <main>
-      <section className="hero">
+      <LandingHero />
+      <section className="hero legacy-home-section">
         <div className="hero-grid" />
         <div className="shell hero-content">
           <div className="hero-copy">
