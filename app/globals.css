@@ -77,7 +77,7 @@ em { color: var(--orange); font-style: normal; }
 .editorial-footer p { max-width: 280px; margin: 0; color: #5b6b70; font-size: 13px; line-height: 1.6; }
 .editorial-cta { display: inline-flex; align-items: center; gap: 18px; padding: 13px 18px; border: 1px solid #152d3850; border-radius: 999px; font-size: 13px; font-weight: 800; }
 .editorial-cta span { color: #c35b3d; font-size: 18px; }
-.home-header { position: fixed; top: 0; left: 0; right: 0; opacity: 0; transform: translateY(-18px); pointer-events: none; background: transparent; border-bottom: 0; transition: opacity .7s ease, transform .7s ease; }
+.site-header.home-header { position: fixed; top: 0; left: 0; right: 0; opacity: 0; transform: translateY(-18px); pointer-events: none; background: transparent; border-bottom: 0; transition: opacity .7s ease, transform .7s ease; }
 .home-header.header-revealed { opacity: 1; transform: translateY(0); pointer-events: auto; }
 .home-header .brand { color: #152d38; }
 .legacy-home-section { display: none; }
