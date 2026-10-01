@@ -27,14 +27,16 @@ export function SiteHeader() {
           <span className="brand-mark">AR</span>
           <span>Aviator&apos;s<br /><b>Regiment</b></span>
         </Link>
-        <nav className={open ? "nav nav-open" : "nav"} aria-label="Primary navigation">
-          <Link href="/rent-cx3">Rent CX-3</Link>
-          <Link href="/services">Services</Link>
-          <Link href="/aviation-news">News</Link>
-          <Link href="/careers">Careers</Link>
-          <Link href="/about">About</Link>
-        </nav>
-        <Link className="header-cta" href="/rent-cx3">Start your flight path <span>↗</span></Link>
+        <div className="header-actions">
+          <nav className={open ? "nav nav-open" : "nav"} aria-label="Primary navigation">
+            <Link href="/rent-cx3">Rent CX-3</Link>
+            <Link href="/services">Services</Link>
+            <Link href="/aviation-news">News</Link>
+            <Link href="/careers">Careers</Link>
+            <Link href="/about">About</Link>
+          </nav>
+          <Link className="header-cta" href="/rent-cx3">Start your flight path <span>↗</span></Link>
+        </div>
         <button className="menu-button" aria-label="Toggle navigation" onClick={() => setOpen(!open)}>
           {open ? "×" : "☰"}
         </button>
