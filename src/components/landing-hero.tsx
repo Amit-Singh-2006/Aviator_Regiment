@@ -34,7 +34,14 @@ export function LandingHero() {
                 <span className={`editorial-image editorial-image-${word.image}`} aria-hidden="true" />
               ) : null}
               <span className="editorial-word-text">{word.text}</span>
-              {index === 2 ? <span className="editorial-flight-line" aria-hidden="true" /> : null}
+              {index === 2 ? (
+                <>
+                  <span className="editorial-flight-line" aria-hidden="true" />
+                  <span className="editorial-flight-aircraft" aria-hidden="true">
+                    ✈
+                  </span>
+                </>
+              ) : null}
             </span>
           ))}
         </h1>
