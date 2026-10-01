@@ -59,7 +59,7 @@ em { color: var(--orange); font-style: normal; }
 .editorial-kicker { margin: 0 0 28px; color: #c35b3d; font: 500 11px "DM Mono", monospace; letter-spacing: .14em; text-transform: uppercase; }
 .editorial-title { display: flex; flex-direction: column; align-items: center; width: min(100%, 1080px); margin: 0 auto; font-family: "Freestyle Script", "Brush Script MT", "Segoe Script", cursive; font-size: clamp(92px, 12vw, 188px); font-weight: 400; line-height: .58; letter-spacing: .01em; }
 .editorial-word { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .08em; min-height: 1em; overflow: visible; white-space: nowrap; vertical-align: middle; }
-.editorial-word-1 { transform: translateX(-9vw) rotate(-9deg); }
+.editorial-word-1 { margin-bottom: -.12em; transform: translateX(-9vw) rotate(-9deg); }
 .editorial-word-2 { transform: translateX(9vw) rotate(3deg); }
 .editorial-word-3 { transform: translateX(-8vw) rotate(-5deg); }
 .editorial-word-4 { transform: translateX(8vw) rotate(4deg); }
@@ -106,7 +106,7 @@ em { color: var(--orange); font-style: normal; }
 @media (max-width: 600px) {
   .editorial-hero-inner { width: min(100% - 28px, 1240px); padding-top: 115px; }
   .editorial-title { font-size: clamp(72px, 21vw, 122px); line-height: .62; }
-  .editorial-word-1 { transform: translateX(-8vw) rotate(-8deg); }
+  .editorial-word-1 { margin-bottom: -.1em; transform: translateX(-8vw) rotate(-8deg); }
   .editorial-word-2 { transform: translateX(8vw) rotate(3deg); }
   .editorial-word-3 { transform: translateX(-7vw) rotate(-5deg); }
   .editorial-word-4 { transform: translateX(7vw) rotate(4deg); }
