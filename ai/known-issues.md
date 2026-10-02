@@ -74,6 +74,7 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
 | KI-48 | Careers links can go stale; no link checker | Low | Open |
 | KI-49 | End-to-end tests live outside the repo | Medium | Open |
 | KI-50 | The GitHub repository is public | Medium | Open (needs decision) |
+| KI-51 | Android app: Play App Signing fingerprint and domain coupling | Medium | Open (until the first Play upload) |
 
 ---
 
@@ -304,6 +305,12 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
 - **What this exposes:** the full source, the SQL schema and RLS policies, the n8n booking-webhook URL (migration 0002; protected by the secret header since migration 0006), the Supabase project ref, and the admin email addresses in `ai/` docs and commit metadata. No secrets were found in tracked files; the staged diff was scanned before the push.
 - **Possible impact:** attackers can study the code paths, and the client's business logic is public.
 - **Recommended next step:** decide with the client whether the repo should be private. Either way, never commit secrets, the client spec or n8n exports.
+
+### KI-51 · Android app: Play signing fingerprint and domain coupling
+- **Severity:** Medium.
+- **Evidence:** VERIFIED: `public/.well-known/assetlinks.json` lists only the upload key. Google Play re-signs uploads with its own key, and the app's host is fixed in `android/app/build.gradle`.
+- **Possible impact:** the Play Store version would show a browser address bar until Google's signing-key fingerprint is added; moving to a new domain needs a new app release.
+- **Recommended next step:** after the first upload, add the "App signing key certificate" SHA-256 from Play Console to `assetlinks.json` and deploy. Ideally connect the final domain before publishing to Play.
 
 ## Resolved issues (history)
 

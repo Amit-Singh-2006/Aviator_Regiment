@@ -1,0 +1,14 @@
+# Build output and machine-specific settings
+.gradle/
+build/
+app/build/
+dist/
+local.properties
+.idea/
+*.iml
+captures/
+
+# Signing keys and their passwords never go into the (public) repository
+*.jks
+*.keystore
+keystore.properties

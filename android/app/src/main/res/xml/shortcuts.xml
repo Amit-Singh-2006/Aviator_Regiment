@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_rent"
+        android:shortcutId="rent"
+        android:shortcutLongLabel="@string/shortcutRentLong"
+        android:shortcutShortLabel="@string/shortcutRentShort">
+        <intent
+            android:action="android.intent.action.MAIN"
+            android:data="@string/shortcutRentUrl"
+            android:targetClass="com.aviatorsregiment.app.LauncherActivity"
+            android:targetPackage="com.aviatorsregiment.app" />
+        <categories android:name="android.intent.category.LAUNCHER" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_track"
+        android:shortcutId="track"
+        android:shortcutLongLabel="@string/shortcutTrackLong"
+        android:shortcutShortLabel="@string/shortcutTrackShort">
+        <intent
+            android:action="android.intent.action.MAIN"
+            android:data="@string/shortcutTrackUrl"
+            android:targetClass="com.aviatorsregiment.app.LauncherActivity"
+            android:targetPackage="com.aviatorsregiment.app" />
+        <categories android:name="android.intent.category.LAUNCHER" />
+    </shortcut>
+</shortcuts>

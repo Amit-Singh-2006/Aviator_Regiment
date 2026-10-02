@@ -5,3 +5,6 @@
 .kilo
 .next
 node_modules
+
+# Android app project (built separately with Gradle; see android/README.md)
+android

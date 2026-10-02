@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.aviatorsregiment.app",
+      "sha256_cert_fingerprints": [
+        "E9:CF:32:F1:58:AC:E5:8F:E3:01:9A:B7:79:0D:7C:F0:F3:DE:4F:75:00:13:91:B1:68:DF:24:4C:1A:BC:25:2B"
+      ]
+    }
+  }
+]

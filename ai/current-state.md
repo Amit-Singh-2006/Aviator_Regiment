@@ -282,6 +282,15 @@ These values must also be set in the hosting environment. `NEXT_PUBLIC_*` values
 - **Production environment variables:** the Supabase URL, publishable key and secret key (sensitive); WhatsApp, community and Telegram links; UPI details; the support email, phone and address; and `NEXT_PUBLIC_SITE_URL`. **The Razorpay keys are deliberately not set** (D-37), so production offers UPI only.
 - **Checked after deploying:** every public page returns 200 with no console errors; sessions and prices load; `/api/track` runs in `bom1` and returns the expected 404; the Razorpay order endpoint returns 503.
 
+### Android app (VERIFIED 2026-10-02)
+
+- **What it is:** `android/` is a Trusted Web Activity (androidbrowserhelper 2.7.3, based on Bubblewrap's template) that opens `https://aviators-regiment.vercel.app` full screen in Chrome. The website wasn't changed apart from `public/.well-known/assetlinks.json`.
+- **Identity:** package `com.aviatorsregiment.app`, version 1.0.0 (code 1), min API 23, target API 36, label "Aviator's" (full name "Aviator's Regiment"), portrait, navy status bar, cream splash with the logo, shortcuts to `/rent-cx3` and `/track`.
+- **Signing:** upload key in `../Aviator_Regiment-android-signing/` (outside the repo, never committed); `android/local.properties` points Gradle at it. SHA-256 `E9:CF:32:F1:58:AC:E5:8F:E3:01:9A:B7:79:0D:7C:F0:F3:DE:4F:75:00:13:91:B1:68:DF:24:4C:1A:BC:25:2B`.
+- **Build:** `gradlew assembleRelease bundleRelease` with Android Studio's JBR 21, cached Gradle 8.14.3 and AGP 8.13.0; copies in `android/dist/` (git-ignored).
+- **Checks:** apksigner verifies v1+v2 signatures; Google's Digital Asset Links API returns `"linked": true`. On the Pixel 9 emulator (Android 17, Chrome 149): the splash, home, Rent CX-3 and the Track shortcut all open with no address bar.
+- **Not done:** Google Play listing, Play App Signing fingerprint in `assetlinks.json` (KI-51), iOS.
+
 ## 14. Important workflows
 
 1. **Booking lifecycle:**

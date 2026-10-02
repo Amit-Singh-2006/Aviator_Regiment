@@ -1,0 +1,89 @@
+plugins {
+    id 'com.android.application'
+}
+
+// The Android app opens the live website in a Trusted Web Activity: full screen,
+// no browser bar, and always the latest version of the site. Changing the domain
+// means changing hostName here and in public/.well-known/assetlinks.json.
+def twa = [
+    applicationId  : 'com.aviatorsregiment.app',
+    hostName       : 'aviators-regiment.vercel.app',
+    launchPath     : '/',
+    // Apostrophes must be escaped in Android string resources.
+    name           : "Aviator\\'s Regiment",
+    launcherName   : "Aviator\\'s",
+    themeColor     : '#0A1B3D', // status bar; the site's theme-color, which Chrome applies once a page loads
+    navigationColor: '#F2EDE3', // matches the site's cream background
+    backgroundColor: '#F2EDE3', // splash screen
+]
+
+// Release signing is read from a properties file outside the repository; its path
+// is set in local.properties as signing.properties=... (see README.md).
+def signing = new Properties()
+def localProperties = new Properties()
+def localFile = rootProject.file('local.properties')
+if (localFile.exists()) localFile.withInputStream { localProperties.load(it) }
+def signingPath = localProperties.getProperty('signing.properties')
+if (signingPath != null && new File(signingPath).exists()) new File(signingPath).withInputStream { signing.load(it) }
+
+android {
+    namespace twa.applicationId
+    compileSdk 36
+
+    defaultConfig {
+        applicationId twa.applicationId
+        minSdk 23
+        targetSdk 36
+        versionCode 1
+        versionName '1.0.0'
+
+        def origin = "https://${twa.hostName}"
+        resValue 'string', 'appName', twa.name
+        resValue 'string', 'launcherName', twa.launcherName
+        resValue 'string', 'launchUrl', origin + twa.launchPath
+        resValue 'string', 'hostName', twa.hostName
+        resValue 'string', 'providerAuthority', twa.applicationId + '.fileprovider'
+        resValue 'string', 'assetStatements',
+            '[{ \\"relation\\": [\\"delegate_permission/common.handle_all_urls\\"], \\"target\\": { \\"namespace\\": \\"web\\", \\"site\\": \\"' + origin + '\\" } }]'
+        resValue 'string', 'shortcutRentUrl', origin + '/rent-cx3'
+        resValue 'string', 'shortcutTrackUrl', origin + '/track'
+        resValue 'color', 'colorPrimary', twa.themeColor
+        resValue 'color', 'colorPrimaryDark', twa.themeColor
+        resValue 'color', 'navigationColor', twa.navigationColor
+        resValue 'color', 'navigationColorDark', twa.navigationColor
+        resValue 'color', 'navigationDividerColor', '#00000000'
+        resValue 'color', 'navigationDividerColorDark', '#00000000'
+        resValue 'color', 'backgroundColor', twa.backgroundColor
+    }
+
+    signingConfigs {
+        release {
+            if (signing.getProperty('storeFile')) {
+                storeFile file(signing.getProperty('storeFile'))
+                storePassword signing.getProperty('storePassword')
+                keyAlias signing.getProperty('keyAlias')
+                keyPassword signing.getProperty('keyPassword')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            signingConfig signing.getProperty('storeFile') ? signingConfigs.release : null
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.3'
+}

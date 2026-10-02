@@ -323,6 +323,12 @@ The user asked for four things in the same message: do the recommended audit ite
 - **Affected:** `vercel.json`, `.vercelignore`, `.gitignore` (`.vercel`), the Vercel project environment, `app/(marketing)/{contact,privacy-policy,shipping-policy}`, `src/components/contact-details.tsx`, `src/lib/site-config.ts`.
 - **Trade-offs:** pushes don't deploy (no Git connection yet); the policies are reasonable defaults written from the site's actual behaviour and should be reviewed by the client, ideally with legal advice.
 
+### D-38 · Android app as a Trusted Web Activity
+- **Decision:** the app wraps the live website in a Trusted Web Activity (androidbrowserhelper) rather than a separate native or WebView app. It lives in `android/`, with the signing key kept outside the repository.
+- **Reason:** VERIFIED. The user asked to "convert this into an app" while keeping the website unchanged. A TWA reuses the site entirely (booking, Razorpay, uploads and admin all run in Chrome) and updates with every website deploy. Google recommends it for publishing web apps on Play.
+- **Affected:** `android/`, `public/.well-known/assetlinks.json`, `.vercelignore` (excludes `android`).
+- **Trade-offs:** it needs Chrome (or another TWA-capable browser) on the phone, otherwise it opens a Custom Tab with an address bar. The app is tied to one domain. iOS needs a Mac, an Apple Developer account and a different wrapper (for example Capacitor), and Apple may reject a pure website wrapper (guideline 4.2).
+
 ---
 
 ## Open or pending decisions (not yet made)

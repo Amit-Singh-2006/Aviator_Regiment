@@ -22,6 +22,9 @@ src/
 
 tests/
   unit/               Vitest unit tests for pure modules
+
+android/              Android app (Trusted Web Activity wrapping the live site);
+                      built with Gradle, see android/README.md
 ```
 
 The V1 domains are bookings, exam sessions, payments, CX-3 assignments,

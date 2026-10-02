@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand navy behind the round logo on the launcher icon and shortcuts. -->
+    <color name="iconBackground">#0A1B3D</color>
+    <color name="shortcutGlyph">#D6A84F</color>
+</resources>

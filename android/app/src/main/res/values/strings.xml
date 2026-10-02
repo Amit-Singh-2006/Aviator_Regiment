@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Long-press shortcuts on the app icon. -->
+    <string name="shortcutRentShort">Rent CX-3</string>
+    <string name="shortcutRentLong">Rent a CX-3</string>
+    <string name="shortcutTrackShort">Track booking</string>
+    <string name="shortcutTrackLong">Track your booking</string>
+</resources>
