@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
       <p>Aviator&apos;s Regiment (&quot;we&quot;, &quot;us&quot;){siteConfig.businessAddress ? `, ${siteConfig.businessAddress},` : ""} is responsible for the personal data described in this policy. Our contact details are at the end of this page.</p>
       <h2>2. What we collect</h2>
       <ul>
-        <li><b>When you book a CX-3:</b> your full name, phone number, email address, delivery address, Aadhaar number, a passport-size photo, your DGCA Computer Number (or registration number) and the examination session you are appearing for.</li>
+        <li><b>When you book a CX-3:</b> your full name, phone number, email address, delivery address, Aadhaar number, a passport-size photo, your DGCA Computer Number (or registration number), the examination session you are appearing for and the date of your last exam.</li>
         <li><b>When you pay:</b> for UPI, the payment screenshot you upload. For online payments, Razorpay processes your card, bank or UPI details; we receive only the payment reference, amount and status, never your card number, bank login or UPI PIN.</li>
         <li><b>When you contact us:</b> the messages and details you send by WhatsApp, phone or email.</li>
         <li><b>When you use the website:</b> our hosting provider processes technical data such as your IP address and browser type to deliver and secure the site. To stop misuse of the booking and tracking forms, we keep a one-way scrambled (hashed) form of your IP address for a few days, never the address itself.</li>
@@ -26,7 +26,7 @@ export default function PrivacyPolicyPage() {
       <ul>
         <li>To verify your identity and booking details.</li>
         <li>To deliver the CX-3 to you and arrange its return pickup.</li>
-        <li>To process and verify your payment.</li>
+        <li>To process and verify your payment, and to refund your security deposit.</li>
         <li>To contact you about your booking by phone, WhatsApp or email.</li>
         <li>To prevent fraud and misuse, and to meet our legal, tax and accounting obligations.</li>
       </ul>

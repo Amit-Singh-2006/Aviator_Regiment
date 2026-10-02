@@ -1,3 +1,6 @@
+import { todayInIndia } from "@/src/lib/format";
+import { isValidLastExamDate } from "@/src/modules/bookings/rental-period";
+
 export type BookingInput = {
   sessionId: string;
   fullName: string;
@@ -6,6 +9,8 @@ export type BookingInput = {
   address: string;
   aadhaar: string;
   dgcaNumber: string;
+  // YYYY-MM-DD; the customer keeps the CX-3 until the day after.
+  lastExamDate: string;
   termsAccepted: boolean;
 };
 
@@ -53,7 +58,8 @@ export function maskAadhaar(value: string) {
   return `XXXX XXXX ${normalizeAadhaar(value).slice(-4)}`;
 }
 
-export function validateBookingInput(input: Partial<BookingInput>): ValidationResult {
+// `today` (YYYY-MM-DD, India time) is a parameter so tests don't depend on the clock.
+export function validateBookingInput(input: Partial<BookingInput>, today = todayInIndia()): ValidationResult {
   const errors: BookingErrors = {};
   const sessionId = input.sessionId?.trim() ?? "";
   const fullName = input.fullName?.trim().replace(/\s+/g, " ") ?? "";
@@ -62,6 +68,7 @@ export function validateBookingInput(input: Partial<BookingInput>): ValidationRe
   const address = input.address?.trim() ?? "";
   const aadhaar = normalizeAadhaar(input.aadhaar ?? "");
   const dgcaNumber = input.dgcaNumber?.trim() ?? "";
+  const lastExamDate = input.lastExamDate?.trim() ?? "";
 
   // Whether the session is open for booking is checked by the database.
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(sessionId)) errors.sessionId = "Select a valid examination session.";
@@ -72,12 +79,13 @@ export function validateBookingInput(input: Partial<BookingInput>): ValidationRe
   else if (!/\b[1-9]\d{2}\s?\d{3}\b/.test(address)) errors.address = "Include the 6-digit PIN code in your delivery address.";
   if (!isValidAadhaar(aadhaar)) errors.aadhaar = "Enter a valid 12-digit Aadhaar number.";
   if (dgcaNumber.length < 3 || dgcaNumber.length > 40) errors.dgcaNumber = "Enter your DGCA computer / registration number.";
-  if (input.termsAccepted !== true) errors.termsAccepted = "Accept the Terms & Conditions and No-Refund Policy to continue.";
+  if (!isValidLastExamDate(lastExamDate, today)) errors.lastExamDate = "Choose the date of your last exam in this session.";
+  if (input.termsAccepted !== true) errors.termsAccepted = "Accept the Terms & Conditions and Refund Policy to continue.";
 
   if (Object.keys(errors).length > 0) return { success: false, errors };
   return {
     success: true,
-    data: { sessionId, fullName, phone, email, address, aadhaar, dgcaNumber, termsAccepted: true },
+    data: { sessionId, fullName, phone, email, address, aadhaar, dgcaNumber, lastExamDate, termsAccepted: true },
   };
 }
 

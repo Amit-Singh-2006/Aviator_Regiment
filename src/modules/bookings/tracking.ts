@@ -2,6 +2,7 @@ import type { Enums } from "@/src/db/database.types";
 
 export type BookingStatus = Enums<"booking_status">;
 export type PaymentStatus = Enums<"payment_status">;
+export type DepositStatus = Enums<"deposit_status">;
 
 // Shape returned by public.track_booking — customer-safe fields only.
 export type TrackedShipment = {
@@ -20,7 +21,12 @@ export type TrackedBooking = {
   bookingCode: string;
   status: BookingStatus;
   sessionName: string;
+  // The rental; the refundable deposit is paid on top.
   amountInr: number;
+  depositInr: number;
+  depositStatus: DepositStatus;
+  // YYYY-MM-DD; the customer keeps the CX-3 until the day after.
+  lastExamDate: string | null;
   createdAt: string;
   paymentStatus: PaymentStatus | null;
   paymentMethod: Enums<"payment_method"> | null;
@@ -44,6 +50,14 @@ export const bookingStatusLabels: Record<BookingStatus, string> = {
   cx3_received: "CX-3 received",
   closed: "Booking closed",
   cancelled: "Cancelled",
+};
+
+// How the deposit stands, in the customer's words.
+export const depositStatusLabels: Record<DepositStatus, string> = {
+  unpaid: "Paid with the rental",
+  held: "Held until the CX-3 is returned",
+  refunded: "Refunded",
+  forfeited: "Not refunded (CX-3 lost)",
 };
 
 export const paymentStatusLabels: Record<PaymentStatus, string> = {

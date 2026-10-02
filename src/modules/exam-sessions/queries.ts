@@ -7,7 +7,7 @@ import type { ExamSession } from "@/src/modules/exam-sessions/sessions";
 export const getVisibleSessions = cache(async (): Promise<ExamSession[]> => {
   const { data, error } = await createPublicClient()
     .from("exam_sessions")
-    .select("id, name, session_type, status, rental_prices(amount_inr)")
+    .select("id, name, session_type, status, rental_prices(amount_inr, deposit_inr)")
     .neq("status", "hidden")
     .order("sort_order")
     .order("name");
@@ -19,6 +19,7 @@ export const getVisibleSessions = cache(async (): Promise<ExamSession[]> => {
     type: row.session_type,
     status: row.status,
     priceInr: row.rental_prices.amount_inr,
+    depositInr: row.rental_prices.deposit_inr,
   }));
 });
 

@@ -22,7 +22,7 @@ const homeSections: HomeSection[] = [
     id: "rent-cx3",
     eyebrow: "Rent CX-3",
     title: <>One complete session.<br /><em>Clear, reliable access.</em></>,
-    text: "Choose your DGCA exam session and we take care of the logistics — courier delivery to your door and return pickup after your exams. No security deposit, no per-day pricing.",
+    text: "Choose your DGCA exam session and we take care of the logistics — courier delivery to your door and return pickup after your exams. A refundable security deposit and no per-day pricing.",
     href: "/rent-cx3",
     link: "See sessions",
     font: "cinzel",

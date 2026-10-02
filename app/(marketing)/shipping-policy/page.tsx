@@ -25,11 +25,11 @@ export default function ShippingPolicyPage() {
       <h2>6. Receiving your CX-3</h2>
       <p>Please make sure someone is available at the delivery address and that your phone is reachable. If the package looks damaged when it arrives, take photos and contact us right away.</p>
       <h2>7. Return pickup</h2>
-      <p>We arrange the return pickup after your examination period, so you don&apos;t need to book it yourself. Please keep the CX-3 ready to hand over at the scheduled pickup. The tracking page shows the return status.</p>
+      <p>You can keep the CX-3 until the day after your last exam in the session. We arrange the return pickup from then, so you don&apos;t need to book it yourself: for example, if your last exam is on 10 October, we collect the CX-3 from 11 October. Please keep it ready to hand over at the scheduled pickup. The tracking page shows the return status.</p>
       <h2>8. Delays</h2>
       <p>Courier timelines can be affected by weather, holidays or local restrictions. If your delivery is late, contact us and we will follow up with the courier.</p>
       <h2>9. Cancellations and refunds</h2>
-      <p>CX-3 rental bookings are non-refundable. Please read our <Link href="/refund-policy">No-Refund Policy</Link> before you pay.</p>
+      <p>The CX-3 rental is non-refundable. The security deposit is refunded after the CX-3 is returned, but not if it is lost. Please read our <Link href="/refund-policy">Refund Policy</Link> before you pay.</p>
       <h2>10. Contact</h2>
       <p>Questions about a delivery or pickup? Include your Booking ID and reach us on any of these:</p>
       <ContactDetails />

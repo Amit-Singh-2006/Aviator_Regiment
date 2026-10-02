@@ -7,7 +7,8 @@ import { RazorpayCheckout } from "@/src/components/razorpay-checkout";
 import { UpiPaymentDetails } from "@/src/components/upi-payment-details";
 import { whatsappLink, whatsappMessages } from "@/src/lib/whatsapp";
 import { BOOKING_ID_PATTERN, normalizeBookingId } from "@/src/modules/bookings/booking-id";
-import { bookingStatusLabels, deliveryMilestones, hasReached, paymentStatusLabels, returnMilestones } from "@/src/modules/bookings/tracking";
+import { keepUntilDate } from "@/src/modules/bookings/rental-period";
+import { bookingStatusLabels, deliveryMilestones, depositStatusLabels, hasReached, paymentStatusLabels, returnMilestones } from "@/src/modules/bookings/tracking";
 import type { BookingStatus, TrackedBooking, TrackedShipment } from "@/src/modules/bookings/tracking";
 import { isValidEmail, isValidPhone, normalizePhone, validateImageFile } from "@/src/modules/bookings/validation";
 import { formatInr } from "@/src/modules/exam-sessions/sessions";
@@ -45,7 +46,8 @@ function PaymentPanel({ booking, contact, onlinePayments, onUploaded }: { bookin
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
-  const amount = formatInr(booking.amountInr);
+  // The rental and the refundable deposit are paid together.
+  const amount = formatInr(booking.amountInr + booking.depositInr);
   const rejected = booking.paymentStatus === "rejected";
 
   async function upload() {
@@ -80,7 +82,7 @@ function PaymentPanel({ booking, contact, onlinePayments, onUploaded }: { bookin
       ? <p className="form-error">We couldn&apos;t verify your payment{booking.paymentNote ? `: ${booking.paymentNote}` : "."} If you haven&apos;t paid the full amount, pay it now, then upload a new screenshot.</p>
       : <p className="track-payment-intro">{onlinePayments ? "Pay online for instant confirmation, or pay by UPI and upload your payment screenshot so we can verify it." : "Pay by UPI, then upload your payment screenshot so we can verify it and confirm your booking."}</p>}
     {onlinePayments && <>
-      <RazorpayCheckout bookingCode={booking.bookingCode} rentalInr={booking.amountInr} contact={contact} prefill={isValidPhone(contact) ? { contact: `+91${normalizePhone(contact)}` } : { email: contact }} onPaid={onUploaded} />
+      <RazorpayCheckout bookingCode={booking.bookingCode} amountInr={booking.amountInr + booking.depositInr} contact={contact} prefill={isValidPhone(contact) ? { contact: `+91${normalizePhone(contact)}` } : { email: contact }} onPaid={onUploaded} />
       <p className="payment-divider">or pay by UPI · no fee</p>
     </>}
     <UpiPaymentDetails amount={amount} bookingId={booking.bookingCode} />
@@ -153,6 +155,8 @@ export function TrackBooking({ initialBookingId = "", onlinePayments = false }: 
         <div><dt>Payment</dt><dd>{booking.paymentStatus ? paymentStatusLabels[booking.paymentStatus] : "—"}{booking.paymentStatus === "verified" && booking.paymentMethod === "razorpay" ? " · paid online" : ""}</dd></div>
         <div><dt>Assigned CX-3</dt><dd>{booking.cx3Unit ?? "Not assigned yet"}</dd></div>
         <div><dt>Booked on</dt><dd>{formatDate(booking.createdAt)}</dd></div>
+        {booking.depositInr > 0 && <div><dt>Security deposit</dt><dd>{formatInr(booking.depositInr)} · {depositStatusLabels[booking.depositStatus]}</dd></div>}
+        {booking.lastExamDate && <div><dt>Keep the CX-3 until</dt><dd>{formatDate(keepUntilDate(booking.lastExamDate))}</dd></div>}
       </dl>
       {booking.status === "cancelled"
         ? <p className="demo-note">This booking has been cancelled. <a href={whatsappLink(whatsappMessages.bookingUpdate(booking.bookingCode))} target="_blank" rel="noreferrer">Message us on WhatsApp</a> if you have questions.</p>
@@ -162,7 +166,7 @@ export function TrackBooking({ initialBookingId = "", onlinePayments = false }: 
           <h3 className="tracking-section-title">Delivery</h3>
           <Timeline status={booking.status} milestones={deliveryMilestones} />
           <ShipmentDetails shipment={outbound} label="Courier details" />
-          {showReturn && <><h3 className="tracking-section-title">Return</h3><p className="tracking-note">We arrange the return pickup after your exam period. You don&apos;t need to book it yourself.</p><Timeline status={booking.status} milestones={returnMilestones} /><ShipmentDetails shipment={returnShipment} label="Return courier details" /></>}
+          {showReturn && <><h3 className="tracking-section-title">Return</h3><p className="tracking-note">{booking.lastExamDate ? `You can keep the CX-3 until ${formatDate(keepUntilDate(booking.lastExamDate))}, the day after your last exam. We arrange the return pickup then, so you don't need to book it yourself.` : "We arrange the return pickup the day after your last exam. You don't need to book it yourself."}{booking.depositInr > 0 ? " Your security deposit is refunded once the CX-3 is back with us." : ""}</p><Timeline status={booking.status} milestones={returnMilestones} /><ShipmentDetails shipment={returnShipment} label="Return courier details" /></>}
           <p className="demo-note">Questions about your booking? <a href={whatsappLink(whatsappMessages.bookingUpdate(booking.bookingCode))} target="_blank" rel="noreferrer">Message us on WhatsApp</a> with your Booking ID.</p>
         </>}
     </div></section>}

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { clientIp, hashIdentifier, isRateLimited, tooManyRequests } from "@/src/lib/rate-limit";
 import { BOOKING_DOCUMENTS_BUCKET, createServiceClient, isBookingServiceConfigured } from "@/src/lib/supabase/server";
-import { TERMS_VERSION } from "@/src/modules/bookings/terms";
+import { SECURITY_DEPOSIT_INR, TERMS_VERSION } from "@/src/modules/bookings/terms";
 import { readImageUpload } from "@/src/modules/bookings/uploads";
 import { validateBookingInput } from "@/src/modules/bookings/validation";
 import type { BookingErrors } from "@/src/modules/bookings/validation";
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
     address: text("address"),
     aadhaar: text("aadhaar"),
     dgcaNumber: text("dgcaNumber"),
+    lastExamDate: text("lastExamDate"),
     termsAccepted: text("termsAccepted") === "true",
   });
   const photo = await readImageUpload(form.get("passportPhoto"), "Upload a passport-size photo.");
@@ -81,5 +82,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "We couldn't create your booking. Please try again." }, { status: 500 });
   }
 
-  return NextResponse.json({ bookingCode: data.booking_code, amountInr: data.amount_inr, sessionName: data.session_name }, { status: 201 });
+  // Saved separately so create_booking keeps its signature; a failure here doesn't lose
+  // the booking (the admin can ask the customer for the date).
+  const { data: saved, error: saveError } = await supabase.from("bookings")
+    .update({ last_exam_date: result.data.lastExamDate })
+    .eq("booking_code", data.booking_code)
+    .select("deposit_inr")
+    .single();
+  if (saveError) console.error("Saving the last exam date failed", saveError.message);
+
+  return NextResponse.json({
+    bookingCode: data.booking_code,
+    amountInr: data.amount_inr,
+    depositInr: saved?.deposit_inr ?? SECURITY_DEPOSIT_INR,
+    sessionName: data.session_name,
+  }, { status: 201 });
 }

@@ -19,7 +19,7 @@ const supportLinks = [
   { href: "/contact", label: "Contact us" },
   { href: "/terms", label: "Terms & Conditions" },
   { href: "/privacy-policy", label: "Privacy Policy" },
-  { href: "/refund-policy", label: "No-Refund Policy" },
+  { href: "/refund-policy", label: "Refund Policy" },
   { href: "/shipping-policy", label: "Shipping & Delivery" },
 ];
 

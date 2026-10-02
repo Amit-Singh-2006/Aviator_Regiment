@@ -1,8 +1,9 @@
 import { ActionForm } from "@/src/components/admin/action-form";
 import { AdminHeader, EmptyState, Panel } from "@/src/components/admin/admin-ui";
 import { requireAdmin } from "@/src/lib/supabase/auth";
+import { SECURITY_DEPOSIT_INR } from "@/src/modules/bookings/terms";
 import { deleteSession, savePrices, saveSession } from "@/src/modules/exam-sessions/admin-actions";
-import type { ExamSessionStatus } from "@/src/modules/exam-sessions/sessions";
+import { formatInr, type ExamSessionStatus } from "@/src/modules/exam-sessions/sessions";
 
 export const metadata = { title: "Sessions & prices" };
 
@@ -60,7 +61,7 @@ export default async function SessionsPage() {
       </div>
       <div className="admin-stack">
         <Panel title="Rental prices">
-          <p className="admin-muted">Price for the complete exam session. There is no deposit.</p>
+          <p className="admin-muted">Price for the complete exam session. Every booking also includes the {formatInr(SECURITY_DEPOSIT_INR)} refundable security deposit; it&apos;s part of the Terms, so changing it is a developer change.</p>
           <ActionForm action={savePrices} className="admin-form">
             <label>OLODE session (₹)<input name="OLODE" type="number" min={1} max={100000} step={1} required defaultValue={price("OLODE")} /></label>
             <label>Regular session (₹)<input name="REGULAR" type="number" min={1} max={100000} step={1} required defaultValue={price("REGULAR")} /></label>

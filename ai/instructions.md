@@ -13,7 +13,7 @@ This file was written from a read-only audit of `v1-build` @ `385b718` on 2026-1
 
 ## 1. Project context you must know
 
-- **What it is.** The website for *Aviator's Regiment*. CX-3 rental per DGCA exam session is the main paid service (OLODE ₹2,000, Regular ₹2,500, ₹0 deposit, **no refunds**). Around it: WhatsApp lead pages, careers, coaching, community, AI-assisted aviation news, and an admin console.
+- **What it is.** The website for *Aviator's Regiment*. CX-3 rental per DGCA exam session is the main paid service (OLODE ₹2,000, Regular ₹2,500, plus a refundable ₹5,000 security deposit since 2 Oct 2026; the rental is **non-refundable**, the deposit is kept if the CX-3 is lost). Around it: WhatsApp lead pages, careers, coaching, community, AI-assisted aviation news, and an admin console.
 - **The client's requirements spec is NOT in the repo.** It was pasted into an AI chat on 2026-10-02. Don't assume a requirement unless the code, the README or the user confirms it. Where these docs cite "spec", they mean that transcript.
 - **Accounts.** The Supabase project (`aviators-regiment`, ref `hybtjlozgwfyezqfvnjp`, ap-south-1), n8n Cloud (`aviatorsregiment.app.n8n.cloud`) and Vercel belong to the **client** (aviatorsregiment@gmail.com). The Git remote is the developer's GitHub (`Amit-Singh-2006/Aviator_Regiment`).
 - **People.** The admins are `amit.panwar2k6@gmail.com` (developer) and `aviatorsregiment@gmail.com` (client).
@@ -122,7 +122,8 @@ The user's standing instruction for this audit was: don't modify code, config, d
 | `src/lib/rate-limit.ts`, migration 0006 | Abuse protection for public endpoints and sign-in. It fails open by design. Limits are tuned for shared Indian mobile IPs (KI-46). |
 | `private.app_settings` (`booking_events_webhook_url`, `booking_events_webhook_secret`) and the n8n "Booking Alerts" workflow | The secret exists **only** in the database and in the n8n `onlyRunIf` expression. Never commit it, print it in docs, or export that workflow into the repo. |
 | `public/images/upi-qr.png` | The real payment QR; see approval item 13. |
-| Migrations 0005–0008 | Applied in this order: careers, security_hardening, booking_rules, razorpay_payments. The file numbers match. |
+| Migrations 0005–0010 | Applied in this order: careers, security_hardening, booking_rules, razorpay_payments, security_deposit, deposit_only_when_charged. The file numbers match. |
+| `SECURITY_DEPOSIT_INR` (`src/modules/bookings/terms.ts`) and `rental_prices.deposit_inr` | The legal pages state the constant; bookings are charged the database value. Change both together, and bump `TERMS_VERSION` whenever the Terms or Refund Policy change. |
 | `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `src/lib/razorpay/`, `confirm_razorpay_payment` | Only the server may mark a Razorpay payment paid, and only after a signature check. Never expose the secrets to the browser or relax the HMAC comparison. Test keys stay local; live keys go only into the hosting settings. |
 | n8n workflows `SHumI1sc18nqhdSe` and `s4AjfRZJnuFXwzoY` | Live external automation that isn't version-controlled. Their webhook URL is stored in `private.app_settings`. |
 

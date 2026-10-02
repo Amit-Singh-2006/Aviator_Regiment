@@ -75,6 +75,7 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
 | KI-49 | End-to-end tests live outside the repo | Medium | Open |
 | KI-50 | The GitHub repository is public | Medium | Open (needs decision) |
 | KI-51 | Android app: Play App Signing fingerprint and domain coupling | Medium | Open (until the first Play upload) |
+| KI-52 | Security deposit details the client hasn't decided | Medium | Open (needs the client) |
 
 ---
 
@@ -311,6 +312,15 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
 - **Evidence:** VERIFIED: `public/.well-known/assetlinks.json` lists only the upload key. Google Play re-signs uploads with its own key, and the app's host is fixed in `android/app/build.gradle`.
 - **Possible impact:** the Play Store version would show a browser address bar until Google's signing-key fingerprint is added; moving to a new domain needs a new app release.
 - **Recommended next step:** after the first upload, add the "App signing key certificate" SHA-256 from Play Console to `assetlinks.json` and deploy. Ideally connect the final domain before publishing to Play.
+
+### KI-52 · Security deposit details the client hasn't decided
+- **Severity:** Medium.
+- **Evidence:** VERIFIED. The user's rules (2 Oct 2026) cover the amount, the rental period and loss, but not:
+  - how quickly the deposit is refunded,
+  - what happens if the CX-3 comes back damaged or incomplete,
+  - what happens if the customer doesn't hand it over at the pickup.
+- **Current behaviour:** refunds are manual: the admin sends the money, then clicks "Mark deposit refunded". There are no deductions, and the site promises no timeline.
+- **Recommended next step:** agree these with the client, then add them to the Terms and Refund Policy (and bump `TERMS_VERSION`).
 
 ## Resolved issues (history)
 

@@ -7,7 +7,7 @@ import { BOOKING_ID_PATTERN, normalizeBookingId } from "@/src/modules/bookings/b
 import type { BookingStatus } from "@/src/modules/bookings/tracking";
 import { normalizeContact } from "@/src/modules/bookings/validation";
 
-type CheckoutState = { status: BookingStatus; amountInr: number; orderId: string | null; orderAmountInr: number | null };
+type CheckoutState = { status: BookingStatus; amountInr: number; depositInr: number; orderId: string | null; orderAmountInr: number | null };
 
 const notFound = () => NextResponse.json({ message: "We couldn't find a booking with those details." }, { status: 404 });
 const failed = () => NextResponse.json({ message: "We couldn't start the online payment. Please try again, or pay by UPI." }, { status: 502 });
@@ -58,7 +58,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
     return NextResponse.json({ message }, { status: 409 });
   }
 
-  const { totalInr, feeInr } = onlinePaymentAmount(state.amountInr);
+  // The rental and the refundable deposit are paid together.
+  const { totalInr, feeInr } = onlinePaymentAmount(state.amountInr + state.depositInr);
   let orderId = state.orderId && state.orderAmountInr === totalInr ? state.orderId : null;
   if (!orderId) {
     try {

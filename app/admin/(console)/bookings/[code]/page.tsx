@@ -6,8 +6,9 @@ import { AdminHeader, EmptyState, Panel, Pill } from "@/src/components/admin/adm
 import { formatDate, formatDateTime, todayInIndia } from "@/src/lib/format";
 import { requireAdmin } from "@/src/lib/supabase/auth";
 import { BOOKING_DOCUMENTS_BUCKET } from "@/src/lib/supabase/server";
-import { assignUnit, reviewPayment, saveAdminNotes, saveShipment, setBookingStatus } from "@/src/modules/bookings/admin-actions";
-import { bookingTone, couriers, currentPayment, customerWhatsappLink, outboundStatuses, paymentTone, returnStatuses, shipmentStatusLabels, type ShipmentDirection, type ShipmentStatus } from "@/src/modules/bookings/admin";
+import { assignUnit, markCx3Lost, refundDeposit, reviewPayment, saveAdminNotes, saveShipment, setBookingStatus } from "@/src/modules/bookings/admin-actions";
+import { adminDepositLabels, bookingTone, couriers, currentPayment, customerWhatsappLink, cx3OutStatuses, depositRefundStatuses, depositTone, outboundStatuses, paymentTone, returnStatuses, shipmentStatusLabels, type ShipmentDirection, type ShipmentStatus } from "@/src/modules/bookings/admin";
+import { keepUntilDate } from "@/src/modules/bookings/rental-period";
 import { describeAction, describeDetails } from "@/src/modules/audit/labels";
 import { BOOKING_ID_PATTERN } from "@/src/modules/bookings/booking-id";
 import { bookingStatusLabels, hasReached, paymentStatusLabels, type BookingStatus } from "@/src/modules/bookings/tracking";
@@ -31,7 +32,9 @@ type Shipment = {
   received_date: string | null;
 };
 
-function nextStep(status: BookingStatus, amount: string, unitCode?: string) {
+type DepositInfo = { amount: string; held: boolean; keepUntil: string | null };
+
+function nextStep(status: BookingStatus, amount: string, deposit: DepositInfo, unitCode?: string) {
   switch (status) {
     case "payment_pending": return `Waiting for the customer to pay ${amount} online, or by UPI with a screenshot. If they sent a UPI screenshot on WhatsApp instead, check it in your UPI app and verify the payment.`;
     case "payment_review": return `Check the screenshot against your UPI app. If ${amount} has arrived, verify the payment. Otherwise reject it with a reason.`;
@@ -40,12 +43,16 @@ function nextStep(status: BookingStatus, amount: string, unitCode?: string) {
     case "dispatched":
     case "in_transit":
     case "out_for_delivery": return "Update the delivery status as the courier moves it. The customer sees each update on the tracking page.";
-    case "delivered": return "When the exam is over, schedule the return pickup.";
+    case "delivered": return deposit.keepUntil
+      ? `The customer keeps the CX-3 until ${deposit.keepUntil} (the day after their last exam). Schedule the return pickup for then.`
+      : "Schedule the return pickup for the day after the customer's last exam.";
     case "return_pickup_scheduled":
     case "return_in_transit": return "Update the return as it moves. Mark it received when the CX-3 is back with you.";
-    case "cx3_received": return "Check the CX-3 is complete and working, then close the booking.";
-    case "closed": return "This booking is complete.";
-    case "cancelled": return "This booking was cancelled.";
+    case "cx3_received": return deposit.held
+      ? `Check the CX-3 is complete and working, refund the ${deposit.amount} deposit, then close the booking.`
+      : "Check the CX-3 is complete and working, then close the booking.";
+    case "closed": return deposit.held ? `This booking is closed, but the ${deposit.amount} deposit still needs to be refunded.` : "This booking is complete.";
+    case "cancelled": return deposit.held ? `This booking was cancelled. Refund the ${deposit.amount} deposit the customer paid.` : "This booking was cancelled.";
   }
 }
 
@@ -96,6 +103,7 @@ export default async function BookingDetailPage({ params }: { params: Params }) 
     supabase.from("bookings").select(`
       booking_code, status, amount_inr, full_name, phone, email, delivery_address, aadhaar_number, dgca_number,
       photo_path, terms_version, terms_accepted_at, admin_notes, created_at,
+      deposit_inr, deposit_status, deposit_settled_at, deposit_note, last_exam_date,
       exam_sessions(name, session_type),
       payments(method, status, amount_inr, gateway_fee_inr, screenshot_path, submitted_at, reviewed_at, rejection_reason, razorpay_order_id, razorpay_payment_id, updated_at),
       cx3_assignments(assigned_at, released_at, cx3_units(unit_code)),
@@ -116,7 +124,13 @@ export default async function BookingDetailPage({ params }: { params: Params }) 
   const isFinal = booking.status === "closed" || booking.status === "cancelled";
   // Matches public.admin_set_booking_status: a booking can only be cancelled before the CX-3 leaves.
   const canCancel = ["payment_pending", "payment_review", "confirmed", "cx3_assigned"].includes(booking.status);
-  const amount = formatInr(booking.amount_inr);
+  // What the customer pays: the rental plus the refundable deposit.
+  const amount = formatInr(booking.amount_inr + booking.deposit_inr);
+  const depositAmount = formatInr(booking.deposit_inr);
+  const keepUntil = booking.last_exam_date ? keepUntilDate(booking.last_exam_date) : null;
+  const depositHeld = booking.deposit_status === "held";
+  const canRefundDeposit = depositHeld && depositRefundStatuses.includes(booking.status);
+  const canMarkLost = cx3OutStatuses.includes(booking.status);
   const adminNames = new Map((admins ?? []).map((admin) => [admin.user_id, admin.full_name ?? "Admin"]));
 
   const documentPaths = [booking.photo_path, payment?.screenshot_path].filter((path): path is string => Boolean(path));
@@ -130,10 +144,10 @@ export default async function BookingDetailPage({ params }: { params: Params }) 
 
   return <>
     <Link className="admin-back" href="/admin/bookings">← All bookings</Link>
-    <AdminHeader eyebrow={`${booking.exam_sessions?.name ?? "Booking"} · ${amount}`} title={booking.booking_code}>
+    <AdminHeader eyebrow={`${booking.exam_sessions?.name ?? "Booking"} · ${formatInr(booking.amount_inr)} rental${booking.deposit_inr ? ` + ${depositAmount} deposit` : ""}`} title={booking.booking_code}>
       <Pill tone={bookingTone(booking.status)}>{bookingStatusLabels[booking.status]}</Pill>
     </AdminHeader>
-    <p className="next-step"><b>Next step</b>{nextStep(booking.status, amount, lastUnit?.cx3_units?.unit_code)}</p>
+    <p className="next-step"><b>Next step</b>{nextStep(booking.status, amount, { amount: depositAmount, held: depositHeld, keepUntil: keepUntil ? formatDate(keepUntil) : null }, lastUnit?.cx3_units?.unit_code)}</p>
 
     <div className="admin-columns">
       <div className="admin-stack">
@@ -169,6 +183,30 @@ export default async function BookingDetailPage({ params }: { params: Params }) 
           </> : <EmptyState>No payment record.</EmptyState>}
         </Panel>
 
+        {booking.deposit_inr === 0 ? <Panel title="Security deposit">
+          <p className="admin-muted">No security deposit on this booking. It was made before deposits were introduced.</p>
+        </Panel> : <Panel title="Security deposit" actions={<Pill tone={depositTone(booking.deposit_status)}>{adminDepositLabels[booking.deposit_status]}</Pill>}>
+          <dl className="admin-dl">
+            <div><dt>Amount</dt><dd>{depositAmount}</dd></div>
+            <div><dt>{booking.deposit_status === "forfeited" ? "Kept on" : "Refunded on"}</dt><dd>{formatDateTime(booking.deposit_settled_at)}</dd></div>
+            {booking.deposit_note ? <div className="wide"><dt>Note</dt><dd>{booking.deposit_note}</dd></div> : null}
+          </dl>
+          {canRefundDeposit ? <ActionForm action={refundDeposit} className="admin-form">
+            <input type="hidden" name="bookingCode" value={booking.booking_code} />
+            <label>Refund reference (optional)<input name="note" maxLength={300} placeholder="e.g. UPI reference number" /></label>
+            <button className="admin-button primary" type="submit" data-confirm={`Confirm you've sent the ${depositAmount} deposit back to ${firstName}?`}>Mark deposit refunded</button>
+          </ActionForm> : depositHeld ? <p className="admin-muted">Refund it once the CX-3 is received back (or if the booking is cancelled).</p>
+            : booking.deposit_status === "unpaid" ? <p className="admin-muted">Paid together with the rental. It&apos;s held once the payment is verified.</p> : null}
+          {canMarkLost ? <details className="advanced">
+            <summary>CX-3 lost?</summary>
+            <ActionForm action={markCx3Lost} className="admin-form">
+              <input type="hidden" name="bookingCode" value={booking.booking_code} />
+              <label>What happened<input name="note" maxLength={300} required placeholder="e.g. Customer reported it lost on 12 Oct" /></label>
+              <button className="admin-button danger" type="submit" data-confirm={`Record the CX-3 on ${booking.booking_code} as lost? Under the Terms nothing is refunded: the ${depositAmount} deposit is kept, the booking closes and the unit is retired.`}>Record CX-3 as lost</button>
+            </ActionForm>
+          </details> : null}
+        </Panel>}
+
         <Panel title="Customer">
           <dl className="admin-dl">
             <div><dt>Name</dt><dd>{booking.full_name}</dd></div>
@@ -179,7 +217,9 @@ export default async function BookingDetailPage({ params }: { params: Params }) 
             <div><dt>DGCA computer number</dt><dd>{booking.dgca_number}</dd></div>
             <div><dt>Session</dt><dd>{booking.exam_sessions?.name ?? "—"} ({booking.exam_sessions?.session_type === "OLODE" ? "OLODE" : "Regular"})</dd></div>
             <div><dt>Booked</dt><dd>{formatDateTime(booking.created_at)}</dd></div>
-            <div className="wide"><dt>Terms &amp; no-refund policy</dt><dd>Accepted {formatDateTime(booking.terms_accepted_at)} (version {booking.terms_version})</dd></div>
+            <div><dt>Last exam</dt><dd>{formatDate(booking.last_exam_date)}</dd></div>
+            <div><dt>Keeps the CX-3 until</dt><dd>{formatDate(keepUntil)}</dd></div>
+            <div className="wide"><dt>Terms &amp; refund policy</dt><dd>Accepted {formatDateTime(booking.terms_accepted_at)} (version {booking.terms_version})</dd></div>
           </dl>
           {photoUrl ? <a className="document-preview photo" href={photoUrl} target="_blank" rel="noreferrer">
             {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL from private storage */}
@@ -216,7 +256,7 @@ export default async function BookingDetailPage({ params }: { params: Params }) 
             <input type="hidden" name="bookingCode" value={booking.booking_code} />
             <div className="button-row">
               {booking.status === "cx3_received" ? <button className="admin-button primary" type="submit" name="status" value="closed" data-confirm="Close this booking?">Close booking</button> : null}
-              {canCancel ? <button className="admin-button danger" type="submit" name="status" value="cancelled" data-confirm="Cancel this booking? Rentals are non-refundable, and any assigned CX-3 is freed.">Cancel booking</button> : null}
+              {canCancel ? <button className="admin-button danger" type="submit" name="status" value="cancelled" data-confirm="Cancel this booking? The rental is non-refundable and any assigned CX-3 is freed. Refund the deposit afterwards if it was paid.">Cancel booking</button> : null}
             </div>
           </ActionForm>
           <details className="advanced">

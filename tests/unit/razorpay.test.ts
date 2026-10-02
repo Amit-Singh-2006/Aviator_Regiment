@@ -5,9 +5,11 @@ import { matchesRazorpaySignature, razorpaySignature } from "@/src/lib/razorpay/
 import { normalizeContact } from "@/src/modules/bookings/validation";
 
 describe("onlinePaymentAmount", () => {
-  it("adds the gateway fee so the full rental is received", () => {
+  it("adds the gateway fee so the full amount is received", () => {
     expect(onlinePaymentAmount(2000)).toEqual({ totalInr: 2049, feeInr: 49 });
-    expect(onlinePaymentAmount(2500)).toEqual({ totalInr: 2561, feeInr: 61 });
+    // Rental plus the ₹5,000 security deposit, paid together.
+    expect(onlinePaymentAmount(2000 + 5000)).toEqual({ totalInr: 7170, feeInr: 170 });
+    expect(onlinePaymentAmount(2500 + 5000)).toEqual({ totalInr: 7682, feeInr: 182 });
   });
 
   it("covers Razorpay's 2% + 18% GST on the charged amount", () => {

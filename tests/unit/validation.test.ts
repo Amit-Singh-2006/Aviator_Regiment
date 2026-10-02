@@ -10,8 +10,11 @@ const validInput = {
   address: "12 MG Road, Indiranagar, Bengaluru 560038",
   aadhaar: "9999 4105 7058",
   dgcaNumber: "DGCA-12345",
+  lastExamDate: "2026-10-10",
   termsAccepted: true,
 };
+// A fixed "today" (India time) so date checks don't depend on the clock.
+const TODAY = "2026-10-02";
 
 describe("phone numbers", () => {
   it("accepts common Indian formats", () => {
@@ -43,21 +46,30 @@ describe("Aadhaar", () => {
 
 describe("booking details", () => {
   it("normalises valid details", () => {
-    const result = validateBookingInput(validInput);
+    const result = validateBookingInput(validInput, TODAY);
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data).toMatchObject({ fullName: "Aarav Mehta", phone: "9876543210", email: "aarav@example.com", aadhaar: "999941057058" });
+      expect(result.data).toMatchObject({ fullName: "Aarav Mehta", phone: "9876543210", email: "aarav@example.com", aadhaar: "999941057058", lastExamDate: "2026-10-10" });
+    }
+  });
+
+  it("needs a last exam date from today up to a year ahead", () => {
+    expect(validateBookingInput({ ...validInput, lastExamDate: TODAY }, TODAY).success).toBe(true);
+    for (const lastExamDate of ["", "2026-10-01", "2026-02-30", "10/10/2026", "2027-10-05"]) {
+      const result = validateBookingInput({ ...validInput, lastExamDate }, TODAY);
+      expect(result.success, lastExamDate).toBe(false);
+      if (!result.success) expect(result.errors.lastExamDate).toMatch(/last exam/);
     }
   });
 
   it("requires a PIN code in the address", () => {
-    const result = validateBookingInput({ ...validInput, address: "12 MG Road, Indiranagar, Bengaluru" });
+    const result = validateBookingInput({ ...validInput, address: "12 MG Road, Indiranagar, Bengaluru" }, TODAY);
     expect(result.success).toBe(false);
     if (!result.success) expect(result.errors.address).toMatch(/PIN/);
   });
 
   it("requires the terms to be accepted and a valid session", () => {
-    const result = validateBookingInput({ ...validInput, termsAccepted: false, sessionId: "FC OLODE 03" });
+    const result = validateBookingInput({ ...validInput, termsAccepted: false, sessionId: "FC OLODE 03" }, TODAY);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.errors.termsAccepted).toBeTruthy();

@@ -13,7 +13,7 @@ A factual snapshot of how the project works **today**. It describes what exists,
 
 ## 1. Project purpose
 
-Aviator's Regiment is a website for Indian student pilots and aviation professionals. Its first paid service is **renting a CX-3 for one complete DGCA exam session**: OLODE ₹2,000, Regular ₹2,500, no deposit, no refunds.
+Aviator's Regiment is a website for Indian student pilots and aviation professionals. Its first paid service is **renting a CX-3 for one complete DGCA exam session**: OLODE ₹2,000, Regular ₹2,500, plus a refundable ₹5,000 security deposit (since 2 Oct 2026). The rental is non-refundable; the deposit is refunded after the CX-3 is returned and kept if it is lost. Customers keep the CX-3 until the day after their last exam.
 
 Around that it offers:
 - service lead pages that open WhatsApp;
@@ -85,7 +85,7 @@ vitest.config.mts             Unit test config (@/ alias, React automatic JSX)
 src/
   components/                 Public UI, including upi-payment-details.tsx and razorpay-checkout.tsx (shared by the booking flow and tracking)
   components/admin/           ActionForm, AdminNav, admin-ui, aadhaar-reveal
-  db/migrations/0001–0008     Applied to the live project in this order
+  db/migrations/0001–0010     Applied to the live project in this order
   db/database.types.ts        Generated Supabase types (manually refreshed)
   lib/                        supabase/{server,auth,errors}, razorpay/{fee,signature,server}, rate-limit, site-config, seo, format, whatsapp, section-fonts
   modules/
@@ -156,7 +156,7 @@ When limited, the endpoints return 429 with `Retry-After: 600`. If the rate-limi
   - Admin-side audit entries go through `recordAudit()`, which logs failures instead of throwing.
 - **Aadhaar:** the admin booking page renders only the masked number. "Show full number" calls the `revealAadhaar` server action, which returns the number and writes a `booking.aadhaar_viewed` audit entry.
 
-## 8. Database (VERIFIED: 8 migrations applied, in this order)
+## 8. Database (VERIFIED: 10 migrations applied, in this order)
 
 | Version | Name | Repo file |
 |---|---|---|
@@ -168,6 +168,8 @@ When limited, the endpoints return 429 with `Retry-After: 600`. If the rate-limi
 | 20261002045733 | security_hardening | 0006 |
 | 20261002045832 | booking_rules | 0007 |
 | 20261002092800 | razorpay_payments | 0008 |
+| 20261002124816 | security_deposit | 0009 |
+| 20261002144909 | deposit_only_when_charged | 0010 |
 
 **Changes since the first snapshot:**
 - **New tables:**
@@ -311,7 +313,8 @@ These values must also be set in the hosting environment. `NEXT_PUBLIC_*` values
 
 | Area | Status |
 |---|---|
-| Homepage, navigation, session rental, 4 availability states, booking details, Booking ID, ₹0 deposit, No-Refund acceptance | Implemented |
+| Homepage, navigation, session rental, 4 availability states, booking details, Booking ID, Terms + Refund Policy acceptance | Implemented |
+| Security deposit (₹5,000, paid with the rental) and rental period (last exam date; keep until the day after) | Implemented 2026-10-02: held on payment verification, admin refund after return or cancellation, kept on loss (D-39) |
 | UPI: ID, QR, screenshot upload (booking flow and tracking page), WhatsApp share, manual verification | Implemented and configured locally |
 | **Razorpay** | Implemented: checkout with the fee shown, signature-verified confirmation, webhook (test mode; go-live pending) |
 | CX-3 assignment, shipping, returns, tracking | Implemented with enforced transitions |

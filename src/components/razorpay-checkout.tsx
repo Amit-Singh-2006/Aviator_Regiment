@@ -46,7 +46,8 @@ async function postJson(url: string, body: unknown) {
 
 type Props = {
   bookingCode: string;
-  rentalInr: number;
+  // Amount due before the gateway fee: the rental plus the refundable deposit.
+  amountInr: number;
   // The booking's phone number or email, which the server checks before creating an order.
   contact: string;
   prefill: { name?: string; email?: string; contact?: string };
@@ -55,10 +56,10 @@ type Props = {
 
 // Pays an unpaid booking through Razorpay Checkout (UPI apps, cards, net banking,
 // wallets). The booking is confirmed by the server once Razorpay's signature checks out.
-export function RazorpayCheckout({ bookingCode, rentalInr, contact, prefill, onPaid }: Props) {
+export function RazorpayCheckout({ bookingCode, amountInr, contact, prefill, onPaid }: Props) {
   const [state, setState] = useState<"idle" | "opening" | "open" | "verifying">("idle");
   const [message, setMessage] = useState("");
-  const { totalInr, feeInr } = onlinePaymentAmount(rentalInr);
+  const { totalInr, feeInr } = onlinePaymentAmount(amountInr);
 
   async function verify(response: CheckoutSuccess) {
     setState("verifying");

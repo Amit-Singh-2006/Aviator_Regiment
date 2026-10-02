@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AdminHeader, EmptyState, Panel, Pill } from "@/src/components/admin/admin-ui";
 import { formatDateTime } from "@/src/lib/format";
 import { requireAdmin } from "@/src/lib/supabase/auth";
-import { bookingTone } from "@/src/modules/bookings/admin";
+import { bookingTone, depositRefundStatuses } from "@/src/modules/bookings/admin";
 import { bookingStatusLabels, type BookingStatus } from "@/src/modules/bookings/tracking";
 import { formatInr } from "@/src/modules/exam-sessions/sessions";
 import { newsCategoryLabels } from "@/src/modules/news/categories";
@@ -20,7 +20,8 @@ export default async function OverviewPage() {
   const { supabase, name } = await requireAdmin();
   const countBookings = (statuses: BookingStatus[]) => supabase.from("bookings").select("id", { count: "exact", head: true }).in("status", statuses);
 
-  const [verify, assign, ship, out, returns, unitsAvailable, units, drafts, { data: attention }, { data: recent }, { data: newsDrafts }] = await Promise.all([
+  const [deposits, verify, assign, ship, out, returns, unitsAvailable, units, drafts, { data: attention }, { data: recent }, { data: newsDrafts }] = await Promise.all([
+    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("deposit_status", "held").in("status", depositRefundStatuses),
     countBookings(["payment_review"]),
     countBookings(["confirmed"]),
     countBookings(["cx3_assigned"]),
@@ -30,7 +31,7 @@ export default async function OverviewPage() {
     supabase.from("cx3_units").select("id", { count: "exact", head: true }).neq("status", "retired"),
     supabase.from("news_articles").select("id", { count: "exact", head: true }).in("status", ["draft", "review"]),
     supabase.from("bookings").select("booking_code, full_name, status, updated_at, exam_sessions(name)").in("status", Object.keys(todo) as BookingStatus[]).order("updated_at").limit(10),
-    supabase.from("bookings").select("booking_code, full_name, amount_inr, status, created_at, exam_sessions(name)").order("created_at", { ascending: false }).limit(8),
+    supabase.from("bookings").select("booking_code, full_name, amount_inr, deposit_inr, status, created_at, exam_sessions(name)").order("created_at", { ascending: false }).limit(8),
     supabase.from("news_articles").select("id, title, source_title, category, created_at").in("status", ["draft", "review"]).order("created_at", { ascending: false }).limit(5),
   ]);
 
@@ -40,6 +41,7 @@ export default async function OverviewPage() {
     { label: "Ready to ship", value: ship.count, href: "/admin/bookings?queue=ship", urgent: true },
     { label: "With customers", value: out.count, href: "/admin/bookings?queue=out" },
     { label: "Returns in progress", value: returns.count, href: "/admin/bookings?queue=returns" },
+    { label: "Deposits to refund", value: deposits.count, href: "/admin/bookings?queue=deposits", urgent: true },
     { label: `CX-3 available (of ${units.count ?? 0})`, value: unitsAvailable.count, href: "/admin/units" },
     { label: "News drafts to review", value: drafts.count, href: "/admin/news" },
   ];
@@ -79,7 +81,7 @@ export default async function OverviewPage() {
             <td><Link className="row-link" href={`/admin/bookings/${booking.booking_code}`}>{booking.booking_code}</Link></td>
             <td>{booking.full_name}</td>
             <td>{booking.exam_sessions?.name ?? "—"}</td>
-            <td>{formatInr(booking.amount_inr)}</td>
+            <td>{formatInr(booking.amount_inr + booking.deposit_inr)}</td>
             <td><Pill tone={bookingTone(booking.status)}>{bookingStatusLabels[booking.status]}</Pill></td>
             <td>{formatDateTime(booking.created_at)}</td>
           </tr>)}</tbody>

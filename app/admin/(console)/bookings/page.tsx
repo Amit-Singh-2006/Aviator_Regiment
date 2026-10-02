@@ -22,10 +22,11 @@ export default async function BookingsPage({ searchParams }: { searchParams: Sea
 
   let query = supabase
     .from("bookings")
-    .select("booking_code, full_name, phone, amount_inr, status, created_at, exam_sessions(name), payments(status, updated_at)", { count: "exact" })
+    .select("booking_code, full_name, phone, amount_inr, deposit_inr, status, created_at, exam_sessions(name), payments(status, updated_at)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (queue.statuses.length) query = query.in("status", queue.statuses);
+  if (queue.depositStatus) query = query.eq("deposit_status", queue.depositStatus);
   if (/^AR\d*$/i.test(search)) query = query.ilike("booking_code", `${search.toUpperCase()}%`);
   else if (/^[\d +]{4,}$/.test(search)) query = query.ilike("phone", `%${search.replace(/\D/g, "").slice(-10)}%`);
   else if (search) query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
@@ -72,7 +73,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Sea
                 <td><Link className="row-link" href={`/admin/bookings/${booking.booking_code}`}>{booking.booking_code}</Link></td>
                 <td><b>{booking.full_name}</b><small>{booking.phone}</small></td>
                 <td>{booking.exam_sessions?.name ?? "—"}</td>
-                <td>{formatInr(booking.amount_inr)}</td>
+                <td>{formatInr(booking.amount_inr + booking.deposit_inr)}{booking.deposit_inr ? <small>incl. {formatInr(booking.deposit_inr)} deposit</small> : null}</td>
                 <td><Pill tone={bookingTone(booking.status)}>{bookingStatusLabels[booking.status]}</Pill></td>
                 <td>{payment ? <Pill tone={paymentTone(payment.status)}>{paymentStatusLabels[payment.status]}</Pill> : "—"}</td>
                 <td>{formatDateTime(booking.created_at)}</td>

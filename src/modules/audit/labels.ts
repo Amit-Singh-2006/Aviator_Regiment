@@ -8,6 +8,8 @@ const actionLabels: Record<string, string> = {
   "payment.verified": "Payment verified",
   "payment.rejected": "Payment rejected",
   "payment.razorpay_paid": "Paid online (Razorpay)",
+  "deposit.refunded": "Security deposit refunded",
+  "cx3.lost": "CX-3 recorded as lost (deposit kept)",
   "cx3.assigned": "CX-3 assigned",
   "cx3.added": "CX-3 unit added",
   "cx3.status_set": "CX-3 unit status changed",
@@ -48,6 +50,7 @@ export function describeDetails(details: unknown) {
   const value = details as Record<string, unknown>;
   const text = (key: string) => (typeof value[key] === "string" || typeof value[key] === "number" ? String(value[key]) : "");
   if (text("reason")) return `Reason: ${text("reason")}`;
+  if (text("note")) return text("note");
   if (text("payment_id")) return `₹${text("amount_inr")} incl. ₹${text("gateway_fee_inr")} fee · ${text("payment_id")}`;
   if (text("unit_code")) return `Unit ${text("unit_code")}`;
   if (text("courier") || text("awb_number")) return [text("courier"), text("awb_number")].filter(Boolean).join(" · ");

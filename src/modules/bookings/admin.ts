@@ -1,12 +1,17 @@
 import type { Tone } from "@/src/components/admin/admin-ui";
 import type { Enums } from "@/src/db/database.types";
-import type { BookingStatus, PaymentStatus } from "@/src/modules/bookings/tracking";
+import type { BookingStatus, DepositStatus, PaymentStatus } from "@/src/modules/bookings/tracking";
 
 export type ShipmentStatus = Enums<"shipment_status">;
 export type ShipmentDirection = Enums<"shipment_direction">;
 
+// Bookings whose CX-3 is back (or that were cancelled) can have their deposit refunded.
+export const depositRefundStatuses: BookingStatus[] = ["cx3_received", "closed", "cancelled"];
+// While the CX-3 is out, an admin can record it as lost (the deposit is then kept).
+export const cx3OutStatuses: BookingStatus[] = ["dispatched", "in_transit", "out_for_delivery", "delivered", "return_pickup_scheduled", "return_in_transit"];
+
 // Work queues in the order bookings move through them.
-export const bookingQueues: { id: string; label: string; statuses: BookingStatus[] }[] = [
+export const bookingQueues: { id: string; label: string; statuses: BookingStatus[]; depositStatus?: DepositStatus }[] = [
   { id: "all", label: "All", statuses: [] },
   { id: "verify", label: "Verify payment", statuses: ["payment_review"] },
   { id: "unpaid", label: "Awaiting payment", statuses: ["payment_pending"] },
@@ -14,8 +19,24 @@ export const bookingQueues: { id: string; label: string; statuses: BookingStatus
   { id: "ship", label: "Ready to ship", statuses: ["cx3_assigned"] },
   { id: "out", label: "With customer", statuses: ["dispatched", "in_transit", "out_for_delivery", "delivered"] },
   { id: "returns", label: "Returns", statuses: ["return_pickup_scheduled", "return_in_transit", "cx3_received"] },
+  { id: "deposits", label: "Refund deposit", statuses: depositRefundStatuses, depositStatus: "held" },
   { id: "closed", label: "Closed", statuses: ["closed", "cancelled"] },
 ];
+
+// Admin wording (the customer-facing labels live in tracking.ts).
+export const adminDepositLabels: Record<DepositStatus, string> = {
+  unpaid: "Not paid yet",
+  held: "Held",
+  refunded: "Refunded",
+  forfeited: "Kept (CX-3 lost)",
+};
+
+export function depositTone(status: DepositStatus): Tone {
+  if (status === "held") return "warn";
+  if (status === "refunded") return "good";
+  if (status === "forfeited") return "bad";
+  return "neutral";
+}
 
 export const shipmentStatusLabels: Record<ShipmentStatus, string> = {
   pending: "Not sent yet",

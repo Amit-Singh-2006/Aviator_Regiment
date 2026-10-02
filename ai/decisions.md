@@ -329,6 +329,18 @@ The user asked for four things in the same message: do the recommended audit ite
 - **Affected:** `android/`, `public/.well-known/assetlinks.json`, `.vercelignore` (excludes `android`).
 - **Trade-offs:** it needs Chrome (or another TWA-capable browser) on the phone, otherwise it opens a Custom Tab with an address bar. The app is tied to one domain. iOS needs a Mac, an Apple Developer account and a different wrapper (for example Capacitor), and Apple may reject a pure website wrapper (guideline 4.2).
 
+### D-39 · Refundable security deposit and rental period
+- **Decision:**
+  - Every booking includes a ₹5,000 security deposit paid together with the rental: UPI asks for rental + deposit (₹7,000 for OLODE), and online payment adds the gateway fee on top of both (₹7,170).
+  - The deposit is part of the Terms, so it is a code constant (`SECURITY_DEPOSIT_INR`) plus `rental_prices.deposit_inr` (default 5000), not editable in the admin panel. Each booking stores its own `deposit_inr`.
+  - `deposit_status`: `unpaid` → `held` (when the payment is verified, only if the deposit is above 0) → `refunded` (admin, after `cx3_received`, `closed` or `cancelled`) or `forfeited` (admin records the CX-3 as lost while it is out; the booking closes and the unit is retired).
+  - The booking form asks for the last exam date. The customer keeps the CX-3 until the next day, and the return pickup is arranged then. It is stored after `create_booking` (a separate update) so the function's signature didn't change.
+  - Bookings made before the deposit (deposit 0, e.g. AR2026107296) show "no security deposit" and never enter the refund queue.
+  - The "No-Refund Policy" became the "Refund Policy" (same URL), and `TERMS_VERSION` is now `2026-10-02.2`.
+- **Reason:** VERIFIED. User message 2026-10-02: "refund policy: 5k security deposit; T&C: the student can only keep the cx3 till his/her exams, if their exam is till 10th oct, then can keep it till 11th oct, after that we'll ship it; if cx3 is lost, the student won't receive anything back, neither the security deposit nor the amount they paid", "decode according to you".
+- **Interpretations made (not stated by the user):** the deposit is refunded after return and on cancellation before dispatch, to the account the customer paid from; the online gateway fee is charged on rental + deposit and is not refunded; no damage deductions or refund timeline were added (KI-52).
+- **Affected:** migrations 0009–0010, `src/modules/bookings/{terms,rental-period,validation,tracking,admin,admin-actions}.ts`, the booking form, tracking, the admin booking/list/overview/sessions pages, the Terms, Refund, Shipping and Privacy pages, the rent page and homepage copy, and the n8n booking-alert email (shows rental + deposit and the last exam date).
+
 ---
 
 ## Open or pending decisions (not yet made)

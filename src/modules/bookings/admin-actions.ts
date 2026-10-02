@@ -109,6 +109,33 @@ export async function setBookingStatus(formData: FormData): Promise<ActionResult
   return { ok: `Status set to “${bookingStatusLabels[status]}”.` };
 }
 
+export async function refundDeposit(formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireAdmin();
+  const code = readBookingCode(formData);
+  if (!code) return { error: "Invalid booking." };
+  const note = text(formData, "note").slice(0, 300);
+
+  const { error } = await supabase.rpc("admin_refund_deposit", { p_booking_code: code, p_note: optional(note) });
+  if (error) return { error: adminErrorMessage(error) };
+  refresh();
+  return { ok: "Deposit marked as refunded." };
+}
+
+// The CX-3 was lost while with the customer: the deposit is kept, nothing is refunded,
+// the booking closes and the unit is retired.
+export async function markCx3Lost(formData: FormData): Promise<ActionResult> {
+  const { supabase } = await requireAdmin();
+  const code = readBookingCode(formData);
+  if (!code) return { error: "Invalid booking." };
+  const note = text(formData, "note").slice(0, 300);
+  if (!note) return { error: "Add a short note about what happened." };
+
+  const { error } = await supabase.rpc("admin_mark_cx3_lost", { p_booking_code: code, p_note: note });
+  if (error) return { error: adminErrorMessage(error) };
+  refresh();
+  return { ok: "CX-3 recorded as lost. The deposit is kept and the booking is closed." };
+}
+
 export async function saveAdminNotes(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireAdmin();
   const code = readBookingCode(formData);

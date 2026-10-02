@@ -12,6 +12,9 @@ const knownErrors: Record<string, string> = {
   return_in_progress: "The return has started, so the delivery stays delivered. You can still correct the courier details.",
   not_delivered_yet: "Record the return after the CX-3 has been delivered.",
   return_already_received: "The CX-3 has already been received back.",
+  deposit_not_held: "There's no deposit held on this booking to refund.",
+  deposit_refund_too_early: "Refund the deposit once the CX-3 is received back, or after the booking is cancelled.",
+  cx3_not_out: "Only a CX-3 that has been sent to the customer can be recorded as lost.",
 };
 
 export function adminErrorMessage(error: { message: string; code?: string }) {

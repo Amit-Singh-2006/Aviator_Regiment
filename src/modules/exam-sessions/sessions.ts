@@ -12,6 +12,8 @@ export type ExamSession = {
   status: ExamSessionStatus;
   // Rental price for the complete examination session (not per day), in INR.
   priceInr: number;
+  // Refundable security deposit, paid together with the rental.
+  depositInr: number;
 };
 
 export const sessionStatusLabels: Record<ExamSessionStatus, string> = {

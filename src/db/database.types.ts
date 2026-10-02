@@ -71,10 +71,15 @@ export type Database = {
           booking_code: string
           created_at: string
           delivery_address: string
+          deposit_inr: number
+          deposit_note: string | null
+          deposit_settled_at: string | null
+          deposit_status: Database["public"]["Enums"]["deposit_status"]
           dgca_number: string
           email: string
           full_name: string
           id: string
+          last_exam_date: string | null
           phone: string
           photo_path: string
           session_id: string
@@ -90,10 +95,15 @@ export type Database = {
           booking_code: string
           created_at?: string
           delivery_address: string
+          deposit_inr?: number
+          deposit_note?: string | null
+          deposit_settled_at?: string | null
+          deposit_status?: Database["public"]["Enums"]["deposit_status"]
           dgca_number: string
           email: string
           full_name: string
           id?: string
+          last_exam_date?: string | null
           phone: string
           photo_path: string
           session_id: string
@@ -109,10 +119,15 @@ export type Database = {
           booking_code?: string
           created_at?: string
           delivery_address?: string
+          deposit_inr?: number
+          deposit_note?: string | null
+          deposit_settled_at?: string | null
+          deposit_status?: Database["public"]["Enums"]["deposit_status"]
           dgca_number?: string
           email?: string
           full_name?: string
           id?: string
+          last_exam_date?: string | null
           phone?: string
           photo_path?: string
           session_id?: string
@@ -524,16 +539,19 @@ export type Database = {
       rental_prices: {
         Row: {
           amount_inr: number
+          deposit_inr: number
           session_type: Database["public"]["Enums"]["session_type"]
           updated_at: string
         }
         Insert: {
           amount_inr: number
+          deposit_inr?: number
           session_type: Database["public"]["Enums"]["session_type"]
           updated_at?: string
         }
         Update: {
           amount_inr?: number
+          deposit_inr?: number
           session_type?: Database["public"]["Enums"]["session_type"]
           updated_at?: string
         }
@@ -603,6 +621,14 @@ export type Database = {
       admin_assign_unit: {
         Args: { p_booking_code: string; p_unit_id: string }
         Returns: Database["public"]["Enums"]["booking_status"]
+      }
+      admin_mark_cx3_lost: {
+        Args: { p_booking_code: string; p_note?: string }
+        Returns: Database["public"]["Enums"]["booking_status"]
+      }
+      admin_refund_deposit: {
+        Args: { p_booking_code: string; p_note?: string }
+        Returns: Database["public"]["Enums"]["deposit_status"]
       }
       admin_review_payment: {
         Args: { p_approve: boolean; p_booking_code: string; p_reason?: string }
@@ -732,6 +758,7 @@ export type Database = {
         | "with_customer"
         | "maintenance"
         | "retired"
+      deposit_status: "unpaid" | "held" | "refunded" | "forfeited"
       news_category:
         | "dgca_updates"
         | "dgca_exam_updates"
