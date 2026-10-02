@@ -341,6 +341,11 @@ The user asked for four things in the same message: do the recommended audit ite
 - **Interpretations made (not stated by the user):** the deposit is refunded after return and on cancellation before dispatch, to the account the customer paid from; the online gateway fee is charged on rental + deposit and is not refunded; no damage deductions or refund timeline were added (KI-52).
 - **Affected:** migrations 0009–0010, `src/modules/bookings/{terms,rental-period,validation,tracking,admin,admin-actions}.ts`, the booking form, tracking, the admin booking/list/overview/sessions pages, the Terms, Refund, Shipping and Privacy pages, the rent page and homepage copy, and the n8n booking-alert email (shows rental + deposit and the last exam date).
 
+### D-40 · Self-hosted ↗ and ✈ glyphs on touch devices
+- **Decision:** two one-glyph Noto subsets (\`public/fonts/ar-symbol-arrow.woff2\` for ↗, \`ar-symbol-plane.woff2\` for ✈; SIL OFL) form an "AR Symbols" font family. It is first in the body font stack and in the hero plane only under \`@media (pointer: coarse), (max-width: 600px)\`.
+- **Reason:** VERIFIED. On the user's Android phone both characters rendered as colour emoji, because the device fonts lack text glyphs. Desktops already draw them with system symbol fonts, and the user wants the desktop look unchanged; the 1366px desktop rent page was pixel-identical after the change.
+- **Affected:** \`app/globals.css\`, \`public/fonts/\`.
+
 ---
 
 ## Open or pending decisions (not yet made)

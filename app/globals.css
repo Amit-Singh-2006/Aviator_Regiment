@@ -1,5 +1,12 @@
 @import "./globals-header.css";
 
+/* Text glyphs for ↗ and ✈, so phones whose fonts lack them don't fall back to
+   colour emoji. One-glyph subsets of Noto Sans Symbols / Symbols 2 (SIL Open Font
+   License 1.1, see public/fonts/README.txt), used on touch devices at the end of
+   this file; unicode-range limits them to these two characters. */
+@font-face { font-family: "AR Symbols"; src: url("/fonts/ar-symbol-arrow.woff2") format("woff2"); unicode-range: U+2197; font-display: block; }
+@font-face { font-family: "AR Symbols"; src: url("/fonts/ar-symbol-plane.woff2") format("woff2"); unicode-range: U+2708; font-display: block; }
+
 :root {
   /* Sampled from the logo. Brand gold is for fills and text on navy; gold-ink
      is the darker shade that stays readable as text on light backgrounds. */
@@ -296,4 +303,11 @@ nav.option-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .option-grid, nav.option-grid { grid-template-columns: 1fr; }
   .option-card { min-height: 96px; }
   .news-search { flex-direction: column; }
+}
+
+/* Phones and tablets (and the Android app) may draw ↗ and ✈ as colour emoji, so they
+   use the self-hosted glyphs; desktops keep their own fonts. */
+@media (pointer: coarse), (max-width: 600px) {
+  body { font-family: "AR Symbols", var(--font-manrope), sans-serif; }
+  .editorial-flight-aircraft { font-family: "AR Symbols", "Arial", sans-serif; }
 }
