@@ -174,7 +174,13 @@ em { color: var(--gold-ink); font-style: normal; }
   .editorial-word-1 { margin-bottom: -.1em; transform: translateX(-8vw) rotate(-8deg); }
   .editorial-word-2 { transform: translateX(8vw) rotate(3deg); }
   .editorial-word-3 { transform: translateX(-7vw) rotate(-5deg); }
-  .editorial-word-4 { transform: translateX(7vw) rotate(4deg); }
+  /* Phones fall back to their own, wider script fonts, so the second photo sits
+     beside "path." (mirroring the one beside "your") rather than above it, where
+     it ran into "Flight". */
+  .editorial-word-4 { transform: translateX(-4vw) rotate(4deg); }
+  .editorial-word-4 .editorial-image { bottom: auto; top: 35%; left: calc(100% + .12em); }
+  /* The gold line follows the word's width, so it still ends where the plane lands. */
+  .editorial-flight-line { width: 81%; }
   .editorial-actions { margin-top: calc(2vh + 52px); }
 }
 @media (prefers-reduced-motion: reduce) {
