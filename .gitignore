@@ -9,3 +9,6 @@ out/
 
 # App builds offered for download: uploaded by `vercel deploy`, kept out of git
 public/downloads/*.apk
+
+# Personal editor settings (machine-specific paths)
+.vscode/
