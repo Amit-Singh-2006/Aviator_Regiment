@@ -205,14 +205,15 @@ When limited, the endpoints return 429 with `Retry-After: 600`. If the rate-limi
   - `public.admin_users` grants admin rights, and `requireAdmin()` guards every page and action.
   - RLS and `private.is_admin()` enforce the same rules in the database.
   - A signed-in non-admin can sign out from the login page.
-- **Auth settings:** whether public sign-up is enabled, and the email provider, are **UNKNOWN**. The advisor reports leaked-password protection as disabled.
+- **Auth settings:** public sign-up is **disabled** (verified with `GET /auth/v1/settings` on 2026-10-02). Leaked-password protection is off because it needs the Pro plan. The email provider is UNKNOWN.
+- **Local development:** run only **one** `npm run dev` at a time. Several Next.js servers sharing `.next` make CSS and JavaScript return 404 and pages lose their styling (seen 2026-10-02 with 4 servers on ports 3000–3002).
 
 ## 10. External services and integrations
 
 | Service | State |
 |---|---|
 | Supabase | Live and healthy; the **only** project, also used by local development |
-| n8n | Both workflows **inactive**, with no credentials in n8n. The booking-alerts webhook now runs only if `x-ar-webhook-secret` matches (`onlyRunIf`). |
+| n8n | Both workflows **published** on 2026-10-02 with the credentials "Supabase account" and "Gmail account". The booking-alert webhook runs only if `x-ar-webhook-secret` matches; a live test booking produced a successful run (execution 3). News runs every 3 hours. |
 | Gmail / Claude via n8n | Not connected or not running yet |
 | WhatsApp | `wa.me` links to **+91 82769 16762** (918276916762); community button → `https://chat.whatsapp.com/GNoTiftyW20G54WwqP7p6S` |
 | UPI | ID **8264742088@mbk**. The QR (`/images/upi-qr.png`) decodes to `upi://pay?pa=8264742088@mbk&pn=Tahasen Rahman`, so the payee name in UPI apps differs from the site label "Aviator's Regiment". |
@@ -232,7 +233,7 @@ Local `.env.local` (values not read, except non-secret business values set on re
 | `NEXT_PUBLIC_UPI_ID` | `8264742088@mbk` |
 | `NEXT_PUBLIC_UPI_QR_IMAGE` | `/images/upi-qr.png` |
 | `NEXT_PUBLIC_UPI_PAYEE_NAME` | SET (`"Aviator's Regiment"`) |
-| `NEXT_PUBLIC_TELEGRAM_URL` | **EMPTY**, so the Telegram button is hidden |
+| `NEXT_PUBLIC_TELEGRAM_URL` | `https://t.me/aviatorsregimenttg` |
 | `NEXT_PUBLIC_SITE_URL` | **not set**; defaults to `https://aviatorsregiment.com`, which isn't owned yet |
 
 These values must also be set in the hosting environment. `NEXT_PUBLIC_*` values are inlined at build time.

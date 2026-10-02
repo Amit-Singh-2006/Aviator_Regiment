@@ -26,7 +26,7 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
 |---|---|---|---|
 | KI-01 | Razorpay payment option not implemented | High | Open |
 | KI-02 | Client business configuration | High | Partly resolved |
-| KI-03 | n8n workflows inactive; credentials missing | High | Open |
+| KI-03 | n8n workflows inactive; credentials missing | High | Resolved (both published 2026-10-02; booking alert tested live) |
 | KI-04 | No rate limiting on public endpoints | High | Resolved |
 | KI-05 | Aadhaar stored in plaintext | High | Partly resolved |
 | KI-06 | Development uses the live (only) Supabase project | High | Open |
@@ -41,7 +41,7 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
 | KI-15 | Careers and coaching content generic | Medium | Partly resolved |
 | KI-16 | No error pages | Medium | Resolved |
 | KI-17 | No security headers | Medium | Resolved (see KI-45) |
-| KI-18 | Public sign-up setting unknown; leaked-password protection off | Medium | Open |
+| KI-18 | Public sign-up setting unknown; leaked-password protection off | Medium | Partly resolved (sign-ups off, verified via `/auth/v1/settings`; leaked-password protection needs the Pro plan) |
 | KI-19 | Booking webhook unauthenticated | Medium | Resolved |
 | KI-20 | No automated tests or CI | Medium | Partly resolved |
 | KI-21 | `npm audit` PostCSS advisory via Next 15 | Medium | Open (assessed) |
