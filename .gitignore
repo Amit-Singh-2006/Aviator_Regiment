@@ -6,3 +6,6 @@ out/
 *.tsbuildinfo
 
 .vercel
+
+# App builds offered for download: uploaded by `vercel deploy`, kept out of git
+public/downloads/*.apk

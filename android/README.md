@@ -37,6 +37,16 @@ Requirements: Android SDK (platform 36, build-tools 36) and JDK 17+ (Android Stu
 
 For each new release, increase `versionCode` (and usually `versionName`) in `app/build.gradle`.
 
+## Direct download (outside Google Play)
+
+The latest APK is offered at `https://aviators-regiment.vercel.app/downloads/aviators-regiment.apk`.
+To update it, copy the new `app-release.apk` to `public/downloads/aviators-regiment.apk` and run
+`vercel deploy --prod` from the project root. APKs are git-ignored, so the file only exists on the
+machine that deploys.
+
+A phone that installed this APK can't take the Google Play version as an update, because Play
+signs with Google's key. Uninstall the downloaded copy first.
+
 ## Signing key
 
 The upload key lives outside the repository, in
