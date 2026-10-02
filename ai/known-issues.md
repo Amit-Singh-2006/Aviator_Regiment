@@ -211,6 +211,7 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
 - **Severity:** Low.
 - **Evidence:** VERIFIED: "Freestyle Script" has no `@font-face`.
 - **Status:** awaiting the user's choice of font.
+- **Update (2026-10-02, VERIFIED):** phones (≤600px) fall back to their own script font (Android: Dancing Script), which made the second hero photo cover "Flight". The phone layout now puts that photo beside "path." and sizes the gold line to the word, checked with Freestyle Script, Dancing Script and a wide Snell-style script at 320–412px. Above 600px nothing changed, and with a fallback font (tablets, Macs, Windows without Office) the photo still overlaps "Flight" by 40–60px. A web font would fix that.
 
 ### KI-32 · News pipeline edge cases
 - **Severity:** Low.
