@@ -302,6 +302,18 @@ The user asked for four things in the same message: do the recommended audit ite
 - **Decision:** `(marketing)/error.tsx` (inside the site header and footer, with a WhatsApp CTA), `admin/(console)/error.tsx` and `global-error.tsx`.
 - **Reason:** VERIFIED. This was the KI-16 recommendation.
 
+### D-36 · Razorpay Standard Checkout with the fee passed to the customer
+- **Decision:**
+  - Online payment sits next to UPI on the booking payment step and the tracking page; UPI stays fee-free.
+  - The online amount is `ceil(rental / (1 − 0.0236))` (Razorpay 2% + 18% GST), e.g. ₹2,049 and ₹2,561, so the full rental is received. The rate is one constant in `src/lib/razorpay/fee.ts`.
+  - Each Razorpay order is its own `payments` row (method `razorpay`, `gateway_fee_inr`, `razorpay_order_id`); an unpaid order for the same amount is reused.
+  - A booking is marked paid only by the server after an HMAC check: the checkout signature (`order_id|payment_id`, key secret) or the webhook signature (raw body, webhook secret). `confirm_razorpay_payment` is idempotent, so both paths can run.
+  - The REST Orders API is called with `fetch`, not the `razorpay` npm SDK, to avoid a dependency for one call.
+  - Admin UPI reviews only touch UPI rows, and rejecting a UPI screenshot keeps a booking that was paid online. The payment shown (tracking and admin) is a verified one first, otherwise the most recently updated.
+- **Reason:** VERIFIED. Spec §6B asks for the fee shown up front and a webhook-driven status; the user supplied test keys on 2026-10-02 after the recommended fee table was proposed.
+- **Affected:** migration 0008, `src/lib/razorpay/`, `app/api/bookings/[code]/razorpay/{order,verify}`, `app/api/razorpay/webhook`, `src/components/razorpay-checkout.tsx`, the booking form, tracking, the admin booking pages, the CSP (scripts from `checkout.razorpay.com` and `cdn.razorpay.com`, frames, `connect-src https://*.razorpay.com`), Permissions-Policy `payment`, and the n8n booking-alert workflow (event `payment.razorpay_paid`).
+- **Trade-offs:** `/track` is a static page, so its online option appears only if the Razorpay keys were set when the site was built. Razorpay ignores obvious dummy phone numbers in the prefill and asks for one.
+
 ---
 
 ## Open or pending decisions (not yet made)
@@ -311,7 +323,7 @@ The user asked for four things in the same message: do the recommended audit ite
 | Hero web font to replace "Freestyle Script" | awaiting the user's choice | session notes |
 | Homepage hero animation that keeps LCP measurable | proposed, not approved (KI-44) | Lighthouse, 2026-10-02 |
 | UPI payee name shown on the site (brand or registered name) or a business UPI ID | needs the user or client (KI-43) | QR decode, 2026-10-02 |
-| Razorpay integration design (fee display, webhook) | not started | spec §6B |
+| Razorpay go-live (KYC, live keys, live webhook) | built and tested in test mode (D-36) | spec §6B |
 | Hosting (Vercel plan, project) and domain | domain not owned yet; Vercel state UNKNOWN | user message, 2026-10-02 |
 | Repo ownership (developer versus client GitHub) | undecided | session notes |
 | Aadhaar storage (plaintext under RLS, encryption or minimisation) | access logging added; storage needs a legal decision | KI-05 |

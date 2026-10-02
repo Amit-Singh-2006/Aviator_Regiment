@@ -7,7 +7,7 @@ import { formatDate, formatDateTime, todayInIndia } from "@/src/lib/format";
 import { requireAdmin } from "@/src/lib/supabase/auth";
 import { BOOKING_DOCUMENTS_BUCKET } from "@/src/lib/supabase/server";
 import { assignUnit, reviewPayment, saveAdminNotes, saveShipment, setBookingStatus } from "@/src/modules/bookings/admin-actions";
-import { bookingTone, couriers, customerWhatsappLink, outboundStatuses, paymentTone, returnStatuses, shipmentStatusLabels, type ShipmentDirection, type ShipmentStatus } from "@/src/modules/bookings/admin";
+import { bookingTone, couriers, currentPayment, customerWhatsappLink, outboundStatuses, paymentTone, returnStatuses, shipmentStatusLabels, type ShipmentDirection, type ShipmentStatus } from "@/src/modules/bookings/admin";
 import { describeAction, describeDetails } from "@/src/modules/audit/labels";
 import { BOOKING_ID_PATTERN } from "@/src/modules/bookings/booking-id";
 import { bookingStatusLabels, hasReached, paymentStatusLabels, type BookingStatus } from "@/src/modules/bookings/tracking";
@@ -33,7 +33,7 @@ type Shipment = {
 
 function nextStep(status: BookingStatus, amount: string, unitCode?: string) {
   switch (status) {
-    case "payment_pending": return `Waiting for the customer to pay ${amount} by UPI and upload the screenshot. If they sent it on WhatsApp instead, check it in your UPI app and verify the payment.`;
+    case "payment_pending": return `Waiting for the customer to pay ${amount} online, or by UPI with a screenshot. If they sent a UPI screenshot on WhatsApp instead, check it in your UPI app and verify the payment.`;
     case "payment_review": return `Check the screenshot against your UPI app. If ${amount} has arrived, verify the payment. Otherwise reject it with a reason.`;
     case "confirmed": return "Payment is verified. Assign a CX-3 unit.";
     case "cx3_assigned": return `Pack ${unitCode ?? "the CX-3"} and add the courier details once it's dispatched.`;
@@ -97,7 +97,7 @@ export default async function BookingDetailPage({ params }: { params: Params }) 
       booking_code, status, amount_inr, full_name, phone, email, delivery_address, aadhaar_number, dgca_number,
       photo_path, terms_version, terms_accepted_at, admin_notes, created_at,
       exam_sessions(name, session_type),
-      payments(method, status, amount_inr, screenshot_path, submitted_at, reviewed_at, rejection_reason, created_at),
+      payments(method, status, amount_inr, gateway_fee_inr, screenshot_path, submitted_at, reviewed_at, rejection_reason, razorpay_order_id, razorpay_payment_id, updated_at),
       cx3_assignments(assigned_at, released_at, cx3_units(unit_code)),
       shipments(direction, status, courier, awb_number, tracking_url, dispatch_date, pickup_date, expected_delivery_date, received_date)
     `).eq("booking_code", code).maybeSingle(),
@@ -107,7 +107,8 @@ export default async function BookingDetailPage({ params }: { params: Params }) 
   ]);
   if (!booking) notFound();
 
-  const payment = [...booking.payments].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+  const payment = currentPayment(booking.payments);
+  const paidOnline = payment?.method === "razorpay";
   const activeUnit = booking.cx3_assignments.find((assignment) => !assignment.released_at);
   const lastUnit = activeUnit ?? [...booking.cx3_assignments].sort((a, b) => b.assigned_at.localeCompare(a.assigned_at))[0];
   const outbound = booking.shipments.find((shipment) => shipment.direction === "outbound");
@@ -140,16 +141,22 @@ export default async function BookingDetailPage({ params }: { params: Params }) 
           {payment ? <>
             <dl className="admin-dl">
               <div><dt>Method</dt><dd>{payment.method === "upi" ? "UPI" : "Razorpay"}</dd></div>
-              <div><dt>Amount</dt><dd>{formatInr(payment.amount_inr)}</dd></div>
-              <div><dt>Screenshot uploaded</dt><dd>{formatDateTime(payment.submitted_at)}</dd></div>
-              <div><dt>Reviewed</dt><dd>{formatDateTime(payment.reviewed_at)}</dd></div>
+              <div><dt>Amount</dt><dd>{formatInr(payment.amount_inr)}{payment.gateway_fee_inr ? ` (incl. ${formatInr(payment.gateway_fee_inr)} gateway fee)` : ""}</dd></div>
+              {paidOnline ? <>
+                <div><dt>Paid</dt><dd>{formatDateTime(payment.submitted_at)}</dd></div>
+                <div><dt>Razorpay payment ID</dt><dd>{payment.razorpay_payment_id ?? "Not paid yet"}</dd></div>
+                <div className="wide"><dt>Razorpay order ID</dt><dd>{payment.razorpay_order_id}</dd></div>
+              </> : <>
+                <div><dt>Screenshot uploaded</dt><dd>{formatDateTime(payment.submitted_at)}</dd></div>
+                <div><dt>Reviewed</dt><dd>{formatDateTime(payment.reviewed_at)}</dd></div>
+              </>}
               {payment.rejection_reason ? <div className="wide"><dt>Rejection reason</dt><dd>{payment.rejection_reason}</dd></div> : null}
             </dl>
             {screenshotUrl ? <a className="document-preview" href={screenshotUrl} target="_blank" rel="noreferrer">
               {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL from private storage */}
               <img src={screenshotUrl} alt={`UPI payment screenshot for ${booking.booking_code}`} />
               <span>Open full screenshot ↗</span>
-            </a> : <p className="admin-muted">No screenshot uploaded on the website yet. Customers may send it on WhatsApp instead.</p>}
+            </a> : paidOnline ? <p className="admin-muted">{payment.status === "verified" ? "Paid online. Razorpay confirmed the payment, so there is nothing to check." : "The customer opened online payment but hasn't paid yet. If they paid by UPI instead, verify it below."}</p> : <p className="admin-muted">No screenshot uploaded on the website yet. Customers may send it on WhatsApp instead.</p>}
             {!isFinal && payment.status !== "verified" ? <ActionForm action={reviewPayment} className="admin-form review-form">
               <input type="hidden" name="bookingCode" value={booking.booking_code} />
               <label>Reason (needed to reject)<input name="reason" maxLength={300} placeholder="e.g. Amount received doesn't match" /></label>

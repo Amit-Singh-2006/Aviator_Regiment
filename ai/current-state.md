@@ -46,7 +46,8 @@ It is a modular monolith: one Next.js app with domain modules under `src/modules
 ```
 Browser ──► Next.js
              ├─ Public pages ── sessions, prices, published news, careers ──► Supabase (publishable key, RLS)
-             ├─ /api/bookings, /api/bookings/[code]/payment-proof, /api/track
+             ├─ /api/bookings, /api/bookings/[code]/payment-proof, /api/bookings/[code]/razorpay/{order,verify}, /api/track
+             ├─ /api/razorpay/webhook ◄── Razorpay (signed with RAZORPAY_WEBHOOK_SECRET)
              │     ├─ rate limit (public.consume_rate_limit, hashed keys)
              │     └─ RPCs + Storage (secret key, server only)
              └─ /admin/* (middleware session refresh) ── server actions ──► Supabase as the signed-in admin (RLS)
@@ -82,19 +83,19 @@ middleware.ts                 Admin session refresh and login redirect
 next.config.ts                Security headers (CSP etc.), 6 MB server-action body limit
 vitest.config.mts             Unit test config (@/ alias, React automatic JSX)
 src/
-  components/                 Public UI, including upi-payment-details.tsx (shared by the booking flow and tracking)
+  components/                 Public UI, including upi-payment-details.tsx and razorpay-checkout.tsx (shared by the booking flow and tracking)
   components/admin/           ActionForm, AdminNav, admin-ui, aadhaar-reveal
-  db/migrations/0001–0007     Applied to the live project in this order
+  db/migrations/0001–0008     Applied to the live project in this order
   db/database.types.ts        Generated Supabase types (manually refreshed)
-  lib/                        supabase/{server,auth,errors}, rate-limit, site-config, seo, format, whatsapp, section-fonts
+  lib/                        supabase/{server,auth,errors}, razorpay/{fee,signature,server}, rate-limit, site-config, seo, format, whatsapp, section-fonts
   modules/
     audit/ (labels, record), bookings/, careers/ (careers, queries, admin-actions), cx3/, exam-sessions/,
     news/ (categories, markdown, queries, search, admin-actions), users/auth-actions
-tests/unit/                   validation.test.ts, content.test.ts
+tests/unit/                   validation.test.ts, content.test.ts, razorpay.test.ts
 public/images/                logo.png, upi-qr.png (business UPI QR), hero images, image.png (unreferenced)
 ```
 
-The empty `.gitkeep` folders remain: lib/{auth,logging,notifications,razorpay,storage,validation}, modules/{leads,payments,returns,shipments,content}, jobs, types, db/schema, tests/{integration,e2e}. A separate git worktree exists at `.kilo/worktrees/poised-ranunculus`; it's ignored.
+The empty `.gitkeep` folders remain: lib/{auth,logging,notifications,storage,validation}, modules/{leads,payments,returns,shipments,content}, jobs, types, db/schema, tests/{integration,e2e}. A separate git worktree exists at `.kilo/worktrees/poised-ranunculus`; it's ignored.
 
 ## 5. Routes (VERIFIED from the last production build)
 
@@ -126,6 +127,9 @@ The empty `.gitkeep` folders remain: lib/{auth,logging,notifications,razorpay,st
 | `/api/bookings` | per IP: 8 per 10 min, 40 per day (counted after validation) | Validates; uploads the photo; RPC `create_booking`; returns 201, 409, 422, 429 or 503 |
 | `/api/bookings/[code]/payment-proof` | per IP 10 per 10 min; per booking 6 per hour | Accepts `contact` (phone or email; legacy field `phone`). Checks the booking and contact with `track_booking` **before** uploading, then calls `submit_payment_proof`. |
 | `/api/track` | per IP 30 per 10 min; per booking 15 per 10 min | `track_booking`; returns the same 404 for every mismatch |
+| `/api/bookings/[code]/razorpay/order` | per IP 20 per 10 min; per booking 10 per 10 min | Accepts `contact`; `razorpay_checkout_state`, then reuses the unpaid order or creates one (Orders API) and stores it with `record_razorpay_order`. Returns the key ID, order ID and amount. 409 unless the booking is `payment_pending`. |
+| `/api/bookings/[code]/razorpay/verify` | per IP 20 per 10 min | Checks the checkout signature (HMAC of `order_id|payment_id` with the key secret); only then `confirm_razorpay_payment`. 400 on a missing field or mismatch. |
+| `/api/razorpay/webhook` | none (signature required) | Checks `X-Razorpay-Signature` over the raw body; confirms on `payment.captured` / `order.paid`; other events and unknown orders return 200. |
 
 When limited, the endpoints return 429 with `Retry-After: 600`. If the rate-limit RPC itself errors, the request is allowed and the error is logged.
 
@@ -152,7 +156,7 @@ When limited, the endpoints return 429 with `Retry-After: 600`. If the rate-limi
   - Admin-side audit entries go through `recordAudit()`, which logs failures instead of throwing.
 - **Aadhaar:** the admin booking page renders only the masked number. "Show full number" calls the `revealAadhaar` server action, which returns the number and writes a `booking.aadhaar_viewed` audit entry.
 
-## 8. Database (VERIFIED: 7 migrations applied, in this order)
+## 8. Database (VERIFIED: 8 migrations applied, in this order)
 
 | Version | Name | Repo file |
 |---|---|---|
@@ -163,6 +167,7 @@ When limited, the endpoints return 429 with `Retry-After: 600`. If the rate-limi
 | 20261002045651 | careers | 0005 |
 | 20261002045733 | security_hardening | 0006 |
 | 20261002045832 | booking_rules | 0007 |
+| 20261002092800 | razorpay_payments | 0008 |
 
 **Changes since the first snapshot:**
 - **New tables:**
@@ -219,7 +224,7 @@ When limited, the endpoints return 429 with `Retry-After: 600`. If the rate-limi
 | UPI | ID **8264742088@mbk**. The QR (`/images/upi-qr.png`) decodes to `upi://pay?pa=8264742088@mbk&pn=Tahasen Rahman`, so the payee name in UPI apps differs from the site label "Aviator's Regiment". |
 | Vercel | **UNKNOWN**: the connector returned 403 and no teams are visible |
 | GitHub | `origin` = `github.com/Amit-Singh-2006/Aviator_Regiment`, **public** (the GitHub API answered without auth on 2026-10-02). `main` is pushed, and the first CI run passed on `374e78d`. |
-| Razorpay | Not implemented |
+| Razorpay | **Test mode** (key `rzp_test_…` in `.env.local`, verified with a real test payment on 2026-10-02). Account activation (KYC), live keys and the dashboard webhook are pending. |
 
 ## 11. Environment and configuration
 
@@ -235,6 +240,7 @@ Local `.env.local` (values not read, except non-secret business values set on re
 | `NEXT_PUBLIC_UPI_PAYEE_NAME` | SET (`"Aviator's Regiment"`) |
 | `NEXT_PUBLIC_TELEGRAM_URL` | `https://t.me/aviatorsregimenttg` |
 | `NEXT_PUBLIC_SITE_URL` | **not set**; defaults to `https://aviatorsregiment.com`, which isn't owned yet |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | SET (test mode). Server only; the key ID reaches the browser through the order endpoint. |
 
 These values must also be set in the hosting environment. `NEXT_PUBLIC_*` values are inlined at build time.
 
@@ -242,11 +248,11 @@ These values must also be set in the hosting environment. `NEXT_PUBLIC_*` values
 
 | Header | Value |
 |---|---|
-| CSP | `default-src 'self'`; `script-src 'self' 'unsafe-inline'` (+ `'unsafe-eval'` in development); `style-src 'self' 'unsafe-inline'`; `img-src 'self' data: blob: https:`; `font-src 'self'`; `connect-src 'self'` (+ ws in development); `frame-ancestors 'none'`; `base-uri 'self'`; `form-action 'self'`; `object-src 'none'` |
+| CSP | `default-src 'self'`; `script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://cdn.razorpay.com` (+ `'unsafe-eval'` in development); `style-src 'self' 'unsafe-inline'`; `img-src 'self' data: blob: https:`; `font-src 'self'`; `connect-src 'self' https://*.razorpay.com` (+ ws in development); `frame-src https://api.razorpay.com https://checkout.razorpay.com`; `frame-ancestors 'none'`; `base-uri 'self'`; `form-action 'self'`; `object-src 'none'` |
 | X-Frame-Options | DENY |
 | X-Content-Type-Options | nosniff |
 | Referrer-Policy | strict-origin-when-cross-origin |
-| Permissions-Policy | locks down camera, microphone, geolocation, payment and USB |
+| Permissions-Policy | locks down camera, microphone, geolocation and USB; `payment` only for the site and `api.razorpay.com` |
 | HSTS | 1 year, includeSubDomains |
 
 ## 12. Build, test and run
@@ -291,7 +297,7 @@ There's no deployment configuration in the repo. Vercel state, plan, domains and
 |---|---|
 | Homepage, navigation, session rental, 4 availability states, booking details, Booking ID, ₹0 deposit, No-Refund acceptance | Implemented |
 | UPI: ID, QR, screenshot upload (booking flow and tracking page), WhatsApp share, manual verification | Implemented and configured locally |
-| **Razorpay** | **Not implemented** |
+| **Razorpay** | Implemented: checkout with the fee shown, signature-verified confirmation, webhook (test mode; go-live pending) |
 | CX-3 assignment, shipping, returns, tracking | Implemented with enforced transitions |
 | Rent Your CX-3 | Implemented |
 | Marketplace / Coming Soon | Implemented (page + footer link) |
@@ -299,7 +305,7 @@ There's no deployment configuration in the repo. Vercel state, plan, domains and
 | Careers: roles → companies → official careers links; admin create/edit/categorise/publish | Implemented; per-role guide content is optional and empty |
 | Services and Coaching content management | Not implemented (hard-coded copy) |
 | Community (WhatsApp group configured; Telegram link missing), About + "Join the Regiment" | Implemented |
-| Admin: create/edit/**delete** sessions, prices, availability, bookings, documents, payments, assignment, couriers, returns, close | Implemented; viewing Razorpay status is N/A |
+| Admin: create/edit/**delete** sessions, prices, availability, bookings, documents, payments, assignment, couriers, returns, close | Implemented, including Razorpay order and payment IDs on the booking page |
 | SEO: metadata, sitemap (incl. careers and news), robots, alt text, NewsArticle + Organization/WebSite JSON-LD | Implemented |
 
 ## 16. Dependencies
@@ -309,8 +315,8 @@ There's no deployment configuration in the repo. Vercel state, plan, domains and
 
 ## 17. Known limitations (details in `known-issues.md`)
 
-- Razorpay is missing.
-- n8n is inactive (credentials missing).
+- Razorpay runs in test mode only; going live needs KYC, live keys and the dashboard webhook.
+- The n8n workflows live outside the repo (no version control or export).
 - The site URL defaults to an unowned domain, and deployment is unknown.
 - Development uses the only (production) database.
 - Aadhaar is stored in plaintext, though now revealed only on request and logged.

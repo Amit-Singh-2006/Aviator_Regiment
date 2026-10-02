@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { RazorpayCheckout } from "@/src/components/razorpay-checkout";
 import { UpiPaymentDetails } from "@/src/components/upi-payment-details";
+import { onlinePaymentAmount } from "@/src/lib/razorpay/fee";
 import { whatsappLink, whatsappMessages } from "@/src/lib/whatsapp";
 import { maskAadhaar, validateBookingInput, validateImageFile, validatePassportPhoto } from "@/src/modules/bookings/validation";
 import type { BookingErrors, BookingField, BookingInput } from "@/src/modules/bookings/validation";
 import { formatInr, isBookable, sessionStatusLabels } from "@/src/modules/exam-sessions/sessions";
 import type { ExamSession } from "@/src/modules/exam-sessions/sessions";
 
-type Step = "details" | "review" | "payment" | "pending";
+type Step = "details" | "review" | "payment" | "pending" | "paid";
 type CreatedBooking = { bookingCode: string; amountInr: number };
 
 const fieldOrder: BookingField[] = ["fullName", "phone", "email", "address", "aadhaar", "dgcaNumber", "passportPhoto", "termsAccepted"];
@@ -29,7 +31,8 @@ async function postForm(url: string, body: FormData) {
   }
 }
 
-export function BookingForm({ session }: { session: ExamSession | null }) {
+// onlinePayments: Razorpay is configured, so customers can pay online as well as by UPI.
+export function BookingForm({ session, onlinePayments = false }: { session: ExamSession | null; onlinePayments?: boolean }) {
   const [step, setStep] = useState<Step>("details");
   const [details, setDetails] = useState<BookingInput | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
@@ -50,6 +53,7 @@ export function BookingForm({ session }: { session: ExamSession | null }) {
   const price = formatInr(booking?.amountInr ?? bookedSession.priceInr);
   const bookingId = booking?.bookingCode ?? "";
   const paymentMessage = whatsappLink(whatsappMessages.upiPayment(bookingId, bookedSession.name, price));
+  const onlineFee = formatInr(onlinePaymentAmount(booking?.amountInr ?? bookedSession.priceInr).feeInr);
 
   function goTo(next: Step) {
     setRequestError("");
@@ -149,7 +153,7 @@ export function BookingForm({ session }: { session: ExamSession | null }) {
   }
 
   if (step === "review" && details) return <div className="shell booking-layout">
-    <div className="booking-intro"><button type="button" className="back-link back-button" onClick={() => goTo("details")} disabled={submitting}>← Edit details</button><p className="eyebrow">Review / Before payment</p><h1>Check your<br /><em>flight plan.</em></h1><p>Check your session and delivery details. Your Booking ID is created when you confirm, and you&apos;ll then see the UPI payment details.</p><div className="booking-summary"><span>Selected session</span><strong>{bookedSession.name}</strong><span>Total payable</span><strong>{price}</strong></div></div>
+    <div className="booking-intro"><button type="button" className="back-link back-button" onClick={() => goTo("details")} disabled={submitting}>← Edit details</button><p className="eyebrow">Review / Before payment</p><h1>Check your<br /><em>flight plan.</em></h1><p>Check your session and delivery details. Your Booking ID is created when you confirm, and you&apos;ll then {onlinePayments ? "pay online or by UPI" : "see the UPI payment details"}.</p><div className="booking-summary"><span>Selected session</span><strong>{bookedSession.name}</strong><span>Total payable</span><strong>{price}</strong></div></div>
     <div className="review-card">
       <div className="review-row"><span>Examination session</span><strong>{bookedSession.name}</strong></div>
       <div className="review-row"><span>Session rental</span><strong>{price} for the complete session</strong></div>
@@ -165,18 +169,29 @@ export function BookingForm({ session }: { session: ExamSession | null }) {
       <div className="review-total"><span>Total payable</span><strong>{price}</strong></div>
       {requestError && <p className="form-error" role="alert">{requestError}</p>}
       <button type="button" className="button button-primary submit-button" onClick={confirmBooking} disabled={submitting}>{submitting ? "Creating your booking…" : <>Confirm booking &amp; continue to payment <span>↗</span></>}</button>
-      <p className="form-note">No security deposit. Rental covers the complete applicable examination session.</p>
+      <p className="form-note">No security deposit. Rental covers the complete applicable examination session.{onlinePayments && ` Paying online adds a ${onlineFee} payment gateway fee; UPI has no fee.`}</p>
     </div>
   </div>;
 
   if (step === "payment" && booking) return <div className="shell booking-layout">
-    <div className="booking-intro"><p className="eyebrow">Payment / UPI</p><h1>Complete your<br /><em>payment.</em></h1><p>Your booking is created. Pay using the UPI ID or QR code, then upload your payment screenshot so we can verify it.</p><div className="booking-summary"><span>Booking ID (save this)</span><strong>{bookingId}</strong><span>Amount payable</span><strong>{price}</strong></div></div>
+    <div className="booking-intro"><p className="eyebrow">{onlinePayments ? "Payment" : "Payment / UPI"}</p><h1>Complete your<br /><em>payment.</em></h1><p>{onlinePayments ? "Your booking is created. Pay online for instant confirmation, or pay by UPI and upload your payment screenshot so we can verify it." : "Your booking is created. Pay using the UPI ID or QR code, then upload your payment screenshot so we can verify it."}</p><div className="booking-summary"><span>Booking ID (save this)</span><strong>{bookingId}</strong><span>{onlinePayments ? "Rental amount" : "Amount payable"}</span><strong>{price}</strong></div></div>
     <div className="upi-card">
+      {onlinePayments && details && <>
+        <RazorpayCheckout bookingCode={bookingId} rentalInr={booking.amountInr} contact={details.phone} prefill={{ name: details.fullName, email: details.email, contact: `+91${details.phone}` }} onPaid={() => goTo("paid")} />
+        <p className="payment-divider">or pay by UPI · no fee</p>
+      </>}
       <UpiPaymentDetails amount={price} bookingId={bookingId} />
       <label className="upload-label">Payment screenshot<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { setScreenshot(event.target.files?.[0] ?? null); setRequestError(""); }} /><small>JPG, PNG or WebP, up to 5 MB. Stored privately and only seen by our team.</small></label>
       {requestError && <p className="form-error upi-error" role="alert">{requestError}</p>}
       <div className="upi-actions"><button type="button" className="button button-primary submit-button" onClick={submitPaymentProof} disabled={submitting}>{submitting ? "Uploading…" : "Submit payment screenshot"}</button><a className="button button-ghost submit-button" href={paymentMessage} target="_blank" rel="noreferrer">Share screenshot on WhatsApp ↗</a></div>
     </div>
+  </div>;
+
+  if (step === "paid" && booking) return <div className="booking-success shell">
+    <p className="eyebrow">Payment received</p><h1>You&apos;re<br /><em>booked.</em></h1>
+    <div className="booking-summary"><span>Your Booking ID (save this)</span><strong>{bookingId}</strong><span>Booking status</span><strong>Booking confirmed</strong></div>
+    <p>Your online payment is confirmed. We&apos;ll assign your CX-3 and share the courier details on the tracking page.</p>
+    <div className="booking-success-actions"><Link className="button button-primary" href={`/track?booking=${bookingId}`}>Track your booking</Link><a className="button button-ghost" href={whatsappLink(whatsappMessages.bookingUpdate(bookingId))} target="_blank" rel="noreferrer">Message us on WhatsApp ↗</a></div>
   </div>;
 
   if (step === "pending" && booking) return <div className="booking-success shell">

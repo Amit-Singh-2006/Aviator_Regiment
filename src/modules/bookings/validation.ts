@@ -32,6 +32,13 @@ export function isValidEmail(value: string) {
   return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
+// The booking phone number or email a customer identifies with, in the stored form;
+// empty when the value is neither.
+export function normalizeContact(value: string) {
+  const contact = value.trim();
+  return isValidPhone(contact) ? normalizePhone(contact) : isValidEmail(contact) ? contact.toLowerCase() : "";
+}
+
 export function normalizeAadhaar(value: string) {
   return value.replace(/[\s-]/g, "");
 }

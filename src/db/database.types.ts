@@ -634,6 +634,10 @@ export type Database = {
         Args: { p_key: string; p_limit: number; p_window_seconds: number }
         Returns: boolean
       }
+      confirm_razorpay_payment: {
+        Args: { p_order_id: string; p_payment_id: string; p_source: string }
+        Returns: Json
+      }
       create_booking: {
         Args: {
           p_aadhaar_number: string
@@ -663,6 +667,19 @@ export type Database = {
           p_source_url: string
         }
         Returns: Json
+      }
+      razorpay_checkout_state: {
+        Args: { p_booking_code: string; p_contact: string }
+        Returns: Json
+      }
+      record_razorpay_order: {
+        Args: {
+          p_amount_inr: number
+          p_booking_code: string
+          p_fee_inr: number
+          p_order_id: string
+        }
+        Returns: undefined
       }
       save_news_draft: {
         Args: {

@@ -24,7 +24,7 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
 
 | ID | Issue | Severity | Status |
 |---|---|---|---|
-| KI-01 | Razorpay payment option not implemented | High | Open |
+| KI-01 | Razorpay payment option not implemented | High | Resolved in code, test mode (KYC, live keys and live webhook pending) |
 | KI-02 | Client business configuration | High | Partly resolved |
 | KI-03 | n8n workflows inactive; credentials missing | High | Resolved (both published 2026-10-02; booking alert tested live) |
 | KI-04 | No rate limiting on public endpoints | High | Resolved |
@@ -88,7 +88,8 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
 - **Current behaviour:** UPI is the only payment option.
 - **Expected behaviour:** spec: Razorpay checkout showing the final amount including the gateway fee, with the status updated by webhook.
 - **Possible impact:** a missing payment option and more manual verification.
-- **Recommended next step:** confirm the fee policy and Razorpay account; design order creation, signature verification and an idempotent webhook.
+- **Resolution (2026-10-02, VERIFIED in test mode):** Razorpay Standard Checkout on the booking payment step and the tracking page; order, verify and webhook endpoints; migration 0008 (D-36). A real test-mode netbanking payment confirmed a test booking, signed webhook replays were idempotent, and the n8n "paid online" alert ran. The test booking was deleted afterwards.
+- **Still open:** Razorpay account activation (KYC, which needs the live site with Privacy, Contact and Shipping pages), live keys in the hosting settings, and the webhook in the Razorpay dashboard (needs the public URL). Webhooks can't reach a laptop, so the webhook was only tested with locally signed requests.
 
 ### KI-02 · Client business configuration (partly resolved)
 - **Severity:** High.

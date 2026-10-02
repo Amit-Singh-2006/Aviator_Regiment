@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AdminHeader, EmptyState, Panel, Pill, Tabs } from "@/src/components/admin/admin-ui";
 import { formatDateTime } from "@/src/lib/format";
 import { requireAdmin } from "@/src/lib/supabase/auth";
-import { bookingQueues, bookingTone, paymentTone } from "@/src/modules/bookings/admin";
+import { bookingQueues, bookingTone, currentPayment, paymentTone } from "@/src/modules/bookings/admin";
 import { bookingStatusLabels, paymentStatusLabels } from "@/src/modules/bookings/tracking";
 import { formatInr } from "@/src/modules/exam-sessions/sessions";
 
@@ -22,7 +22,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Sea
 
   let query = supabase
     .from("bookings")
-    .select("booking_code, full_name, phone, amount_inr, status, created_at, exam_sessions(name), payments(status)", { count: "exact" })
+    .select("booking_code, full_name, phone, amount_inr, status, created_at, exam_sessions(name), payments(status, updated_at)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (queue.statuses.length) query = query.in("status", queue.statuses);
@@ -67,7 +67,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Sea
           <table>
             <thead><tr><th>Booking</th><th>Customer</th><th>Session</th><th>Amount</th><th>Status</th><th>Payment</th><th>Booked</th></tr></thead>
             <tbody>{bookings.map((booking) => {
-              const payment = booking.payments[0];
+              const payment = currentPayment(booking.payments);
               return <tr key={booking.booking_code}>
                 <td><Link className="row-link" href={`/admin/bookings/${booking.booking_code}`}>{booking.booking_code}</Link></td>
                 <td><b>{booking.full_name}</b><small>{booking.phone}</small></td>

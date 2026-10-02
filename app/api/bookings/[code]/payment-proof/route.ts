@@ -3,7 +3,7 @@ import { clientIp, hashIdentifier, isRateLimited, tooManyRequests } from "@/src/
 import { BOOKING_DOCUMENTS_BUCKET, createServiceClient, isBookingServiceConfigured } from "@/src/lib/supabase/server";
 import { BOOKING_ID_PATTERN, normalizeBookingId } from "@/src/modules/bookings/booking-id";
 import { readImageUpload } from "@/src/modules/bookings/uploads";
-import { isValidEmail, isValidPhone, normalizePhone } from "@/src/modules/bookings/validation";
+import { normalizeContact } from "@/src/modules/bookings/validation";
 
 const notFound = () => NextResponse.json({ message: "We couldn't find a booking with those details." }, { status: 404 });
 
@@ -26,8 +26,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
   }
 
   const contactValue = form.get("contact") ?? form.get("phone");
-  const rawContact = typeof contactValue === "string" ? contactValue.trim() : "";
-  const contact = isValidPhone(rawContact) ? normalizePhone(rawContact) : isValidEmail(rawContact) ? rawContact.toLowerCase() : "";
+  const contact = normalizeContact(typeof contactValue === "string" ? contactValue : "");
   if (!contact) {
     return NextResponse.json({ message: "Enter the phone number or email used for this booking." }, { status: 422 });
   }

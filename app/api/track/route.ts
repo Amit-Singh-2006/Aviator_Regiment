@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { clientIp, hashIdentifier, isRateLimited, tooManyRequests } from "@/src/lib/rate-limit";
 import { createServiceClient, isBookingServiceConfigured } from "@/src/lib/supabase/server";
 import { BOOKING_ID_PATTERN, normalizeBookingId } from "@/src/modules/bookings/booking-id";
-import { isValidEmail, isValidPhone, normalizePhone } from "@/src/modules/bookings/validation";
+import { normalizeContact } from "@/src/modules/bookings/validation";
 
 // The same message for every mismatch, so the endpoint never confirms which
 // booking IDs exist.
@@ -22,10 +22,9 @@ export async function POST(request: Request) {
   }
   const input = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
   const bookingCode = normalizeBookingId(typeof input.bookingId === "string" ? input.bookingId : "");
-  const contact = typeof input.contact === "string" ? input.contact.trim() : "";
 
   if (!BOOKING_ID_PATTERN.test(bookingCode)) return notFound();
-  const normalizedContact = isValidPhone(contact) ? normalizePhone(contact) : isValidEmail(contact) ? contact.toLowerCase() : "";
+  const normalizedContact = normalizeContact(typeof input.contact === "string" ? input.contact : "");
   if (!normalizedContact) return notFound();
 
   // Limits guessing: per visitor, and per booking ID however many visitors try.

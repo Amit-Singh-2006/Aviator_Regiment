@@ -47,6 +47,12 @@ export function paymentTone(status: PaymentStatus): Tone {
   return "neutral";
 }
 
+// The payment to show for a booking: a verified one if any, otherwise the most
+// recently updated (matches public.track_booking).
+export function currentPayment<T extends { status: PaymentStatus; updated_at: string }>(payments: T[]) {
+  return [...payments].sort((a, b) => Number(b.status === "verified") - Number(a.status === "verified") || b.updated_at.localeCompare(a.updated_at))[0];
+}
+
 // WhatsApp chat with a customer (stored phones are 10-digit Indian mobiles).
 export function customerWhatsappLink(phone: string, message: string) {
   return `https://wa.me/91${phone}?text=${encodeURIComponent(message)}`;

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { TrackBooking, TrackBookingFromLink } from "@/src/components/track-booking";
+import { isRazorpayConfigured } from "@/src/lib/razorpay/server";
 import { pageMetadata } from "@/src/lib/seo";
 
 export const metadata = pageMetadata({
@@ -10,6 +11,7 @@ export const metadata = pageMetadata({
 });
 
 export default function TrackPage() {
+  const onlinePayments = isRazorpayConfigured();
   // The fallback is the full form, so the page is usable before search params load.
-  return <Suspense fallback={<TrackBooking />}><TrackBookingFromLink /></Suspense>;
+  return <Suspense fallback={<TrackBooking onlinePayments={onlinePayments} />}><TrackBookingFromLink onlinePayments={onlinePayments} /></Suspense>;
 }

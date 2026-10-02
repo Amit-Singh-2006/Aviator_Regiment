@@ -122,7 +122,8 @@ The user's standing instruction for this audit was: don't modify code, config, d
 | `src/lib/rate-limit.ts`, migration 0006 | Abuse protection for public endpoints and sign-in. It fails open by design. Limits are tuned for shared Indian mobile IPs (KI-46). |
 | `private.app_settings` (`booking_events_webhook_url`, `booking_events_webhook_secret`) and the n8n "Booking Alerts" workflow | The secret exists **only** in the database and in the n8n `onlyRunIf` expression. Never commit it, print it in docs, or export that workflow into the repo. |
 | `public/images/upi-qr.png` | The real payment QR; see approval item 13. |
-| Migrations 0005–0007 | Applied in this order: careers, security_hardening, booking_rules. The file numbers match. |
+| Migrations 0005–0008 | Applied in this order: careers, security_hardening, booking_rules, razorpay_payments. The file numbers match. |
+| `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `src/lib/razorpay/`, `confirm_razorpay_payment` | Only the server may mark a Razorpay payment paid, and only after a signature check. Never expose the secrets to the browser or relax the HMAC comparison. Test keys stay local; live keys go only into the hosting settings. |
 | n8n workflows `SHumI1sc18nqhdSe` and `s4AjfRZJnuFXwzoY` | Live external automation that isn't version-controlled. Their webhook URL is stored in `private.app_settings`. |
 
 ## 6. Security-sensitive areas
