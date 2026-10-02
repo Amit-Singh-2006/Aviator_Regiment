@@ -10,6 +10,13 @@ export function formatDateTime(value: string | null | undefined) {
   return value ? dateTimeFormat.format(new Date(value)) : "—";
 }
 
+// Phone numbers stored as digits with the country code; Indian mobiles are shown
+// as +91 79803 46727.
+export function formatPhone(digits: string) {
+  const indian = /^91(\d{5})(\d{5})$/.exec(digits);
+  return indian ? `+91 ${indian[1]} ${indian[2]}` : digits ? `+${digits}` : "";
+}
+
 // Today's date in India as YYYY-MM-DD, for date inputs.
 export function todayInIndia() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());

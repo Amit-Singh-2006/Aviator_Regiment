@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export function LegalPage({ eyebrow, title, intro, updated, children }: { eyebrow: string; title: ReactNode; intro: string; updated: string; children: ReactNode }) {
+export function LegalPage({ eyebrow, title, intro, updated, children }: { eyebrow: string; title: ReactNode; intro: string; updated?: string; children: ReactNode }) {
   return (
     <main>
       <section className="content-hero">
@@ -8,7 +8,7 @@ export function LegalPage({ eyebrow, title, intro, updated, children }: { eyebro
           <p className="eyebrow">{eyebrow}</p>
           <h1>{title}</h1>
           <p>{intro}</p>
-          <p className="legal-updated">Last updated: {updated}</p>
+          {updated && <p className="legal-updated">Last updated: {updated}</p>}
         </div>
       </section>
       <section className="section">

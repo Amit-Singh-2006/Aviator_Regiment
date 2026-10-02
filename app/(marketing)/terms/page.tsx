@@ -46,9 +46,9 @@ export default function TermsPage() {
       <h2>6. Refunds</h2>
       <p>CX-3 rental bookings are non-refundable. Please read our <Link href="/refund-policy">No-Refund Policy</Link> before you pay.</p>
       <h2>7. Your documents and data</h2>
-      <p>Your Aadhaar, photo and DGCA details are used to verify and fulfil your booking. They are stored securely and are only accessible to authorised Aviator&apos;s Regiment administrators.</p>
+      <p>Your Aadhaar, photo and DGCA details are used to verify and fulfil your booking. They are stored securely and are only accessible to authorised Aviator&apos;s Regiment administrators. Our <Link href="/privacy-policy">Privacy Policy</Link> explains how we handle your data, and our <Link href="/shipping-policy">Shipping &amp; Delivery Policy</Link> covers delivery and the return pickup.</p>
       <h2>8. Contact</h2>
-      <p>Questions about these terms? <a href={whatsappLink(whatsappMessages.general)} target="_blank" rel="noreferrer">Message us on WhatsApp</a>.</p>
+      <p>Questions about these terms? <a href={whatsappLink(whatsappMessages.general)} target="_blank" rel="noreferrer">Message us on WhatsApp</a> or see our <Link href="/contact">Contact page</Link>.</p>
     </LegalPage>
   );
 }

@@ -3,7 +3,7 @@ import { siteConfig } from "@/src/lib/site-config";
 import { getCareerSlugs } from "@/src/modules/careers/queries";
 import { getPublishedSlugs } from "@/src/modules/news/queries";
 
-const staticPaths = ["", "/rent-cx3", "/services", "/services/dgca-computer-number", "/services/medical-assistance", "/services/nios-assistance", "/aviation-news", "/careers", "/coaching", "/community", "/marketplace", "/about", "/terms", "/refund-policy"];
+const staticPaths = ["", "/rent-cx3", "/services", "/services/dgca-computer-number", "/services/medical-assistance", "/services/nios-assistance", "/aviation-news", "/careers", "/coaching", "/community", "/marketplace", "/about", "/contact", "/terms", "/privacy-policy", "/refund-policy", "/shipping-policy"];
 
 // Refreshed hourly, and whenever news or careers change in the admin panel.
 export const revalidate = 3600;

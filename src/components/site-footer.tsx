@@ -16,8 +16,11 @@ const exploreLinks = [
 
 const supportLinks = [
   { href: "/track", label: "Track your booking" },
+  { href: "/contact", label: "Contact us" },
   { href: "/terms", label: "Terms & Conditions" },
+  { href: "/privacy-policy", label: "Privacy Policy" },
   { href: "/refund-policy", label: "No-Refund Policy" },
+  { href: "/shipping-policy", label: "Shipping & Delivery" },
 ];
 
 export function SiteFooter() {

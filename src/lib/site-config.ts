@@ -11,4 +11,9 @@ export const siteConfig = {
   upiPayeeName: process.env.NEXT_PUBLIC_UPI_PAYEE_NAME || "Aviator's Regiment",
   // Path under /public or an absolute URL of the business UPI QR code image.
   upiQrImage: process.env.NEXT_PUBLIC_UPI_QR_IMAGE ?? "",
+  // Shown on the Contact, Privacy and Shipping pages. The phone number is digits
+  // only, including the country code (e.g. 917980346727).
+  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "",
+  supportPhone: (process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? "").replace(/\D/g, ""),
+  businessAddress: process.env.NEXT_PUBLIC_BUSINESS_ADDRESS ?? "",
 };
