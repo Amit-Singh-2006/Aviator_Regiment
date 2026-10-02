@@ -1,0 +1,7 @@
+# Files never uploaded by `vercel deploy`. Environment values are set in the
+# Vercel project instead, so local secrets and test keys stay on this machine.
+.env*
+!.env.example
+.kilo
+.next
+node_modules

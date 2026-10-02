@@ -222,7 +222,7 @@ When limited, the endpoints return 429 with `Retry-After: 600`. If the rate-limi
 | Gmail / Claude via n8n | Not connected or not running yet |
 | WhatsApp | `wa.me` links to **+91 82769 16762** (918276916762); community button → `https://chat.whatsapp.com/GNoTiftyW20G54WwqP7p6S` |
 | UPI | ID **8264742088@mbk**. The QR (`/images/upi-qr.png`) decodes to `upi://pay?pa=8264742088@mbk&pn=Tahasen Rahman`, so the payee name in UPI apps differs from the site label "Aviator's Regiment". |
-| Vercel | **UNKNOWN**: the connector returned 403 and no teams are visible |
+| Vercel | **Live**: project `aviators-regiment` (team `aviatorsregiment`, Hobby plan) at `https://aviators-regiment.vercel.app`, deployed with the Vercel CLI on 2026-10-02. Functions run in `bom1` (Mumbai). |
 | GitHub | `origin` = `github.com/Amit-Singh-2006/Aviator_Regiment`, **public** (the GitHub API answered without auth on 2026-10-02). `main` is pushed, and the first CI run passed on `374e78d`. |
 | Razorpay | **Test mode** (key `rzp_test_…` in `.env.local`, verified with a real test payment on 2026-10-02). Account activation (KYC), live keys and the dashboard webhook are pending. |
 
@@ -240,7 +240,9 @@ Local `.env.local` (values not read, except non-secret business values set on re
 | `NEXT_PUBLIC_UPI_PAYEE_NAME` | SET (`"Aviator's Regiment"`) |
 | `NEXT_PUBLIC_TELEGRAM_URL` | `https://t.me/aviatorsregimenttg` |
 | `NEXT_PUBLIC_SITE_URL` | **not set**; defaults to `https://aviatorsregiment.com`, which isn't owned yet |
-| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | SET (test mode). Server only; the key ID reaches the browser through the order endpoint. |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | SET locally (test mode); **not set in Vercel production** (D-37). Server only; the key ID reaches the browser through the order endpoint. |
+| `NEXT_PUBLIC_SUPPORT_EMAIL`, `NEXT_PUBLIC_SUPPORT_PHONE`, `NEXT_PUBLIC_BUSINESS_ADDRESS` | `aviatorsregiment@gmail.com`, `917980346727`, `Kolkata, India` (Contact, Privacy and Shipping pages) |
+| `VERCEL_OIDC_TOKEN` | Added by `vercel link`; local only |
 
 These values must also be set in the hosting environment. `NEXT_PUBLIC_*` values are inlined at build time.
 
@@ -273,7 +275,12 @@ These values must also be set in the hosting environment. `NEXT_PUBLIC_*` values
 
 ## 13. Deployment setup
 
-There's no deployment configuration in the repo. Vercel state, plan, domains and environment variables are **UNKNOWN**. No domain is owned yet.
+- **Host:** Vercel project `aviators-regiment`, team `aviatorsregiment` (client account aviatorsregiment@gmail.com), **Hobby** plan, which doesn't allow commercial use, so upgrade to Pro before launch.
+- **URL:** `https://aviators-regiment.vercel.app`. No custom domain is owned yet.
+- **How it deploys:** `vercel deploy --prod` from this folder (linked in the gitignored `.vercel/`). There's no Git connection, so pushing to GitHub doesn't deploy. `vercel git connect` would add that, but needs access to the GitHub repo owner's account.
+- **Config:** `vercel.json` pins functions to `bom1` (Mumbai, next to Supabase `ap-south-1`). `.vercelignore` keeps `.env*` and `.kilo` out of uploads.
+- **Production environment variables:** the Supabase URL, publishable key and secret key (sensitive); WhatsApp, community and Telegram links; UPI details; the support email, phone and address; and `NEXT_PUBLIC_SITE_URL`. **The Razorpay keys are deliberately not set** (D-37), so production offers UPI only.
+- **Checked after deploying:** every public page returns 200 with no console errors; sessions and prices load; `/api/track` runs in `bom1` and returns the expected 404; the Razorpay order endpoint returns 503.
 
 ## 14. Important workflows
 
@@ -317,7 +324,7 @@ There's no deployment configuration in the repo. Vercel state, plan, domains and
 
 - Razorpay runs in test mode only; going live needs KYC, live keys and the dashboard webhook.
 - The n8n workflows live outside the repo (no version control or export).
-- The site URL defaults to an unowned domain, and deployment is unknown.
+- Production runs on Vercel Hobby (no commercial use) at a vercel.app address, and pushes don't deploy automatically.
 - Development uses the only (production) database.
 - Aadhaar is stored in plaintext, though now revealed only on request and logged.
 - There's no capacity control or unpaid-booking expiry.

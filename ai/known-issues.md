@@ -30,8 +30,8 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
 | KI-04 | No rate limiting on public endpoints | High | Resolved |
 | KI-05 | Aadhaar stored in plaintext | High | Partly resolved |
 | KI-06 | Development uses the live (only) Supabase project | High | Open |
-| KI-07 | Site URL defaults to an unowned domain | Medium | Open |
-| KI-08 | Deployment not configured or verifiable | Medium | Open |
+| KI-07 | Site URL defaults to an unowned domain | Medium | Resolved for production (`NEXT_PUBLIC_SITE_URL` = the vercel.app address); revisit when a domain is bought |
+| KI-08 | Deployment not configured or verifiable | Medium | Resolved: live on Vercel (Hobby plan; Pro needed before commercial use) |
 | KI-09 | No booking capacity control | Medium | Open |
 | KI-10 | No payment screenshot re-upload after the booking flow | Medium | Resolved |
 | KI-11 | Unpaid bookings never expire | Medium | Open |
@@ -97,10 +97,9 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
   - WhatsApp number, community group link, UPI ID and QR are set in `.env.local`.
   - The QR is in `public/images/upi-qr.png`; it decodes to `pa=8264742088@mbk`.
 - **Still open:**
-  - The Telegram link is empty, so the button is hidden.
-  - Only the 2 seed sessions exist, and there are **0 CX-3 units**.
-  - The values must also be set in the hosting environment (UNKNOWN).
-- **Recommended next step:** add the real sessions and units in the admin panel, and set the environment variables in Vercel when deploying.
+  - Only the 2 seed sessions exist. The 3 CX-3 units (DEMO-01 to DEMO-03, added 2026-10-02 at the user's request) are dummies; customers see the unit ID on tracking.
+- **Done since:** the Telegram link is set, and the values are set in Vercel production (2026-10-02).
+- **Recommended next step:** add the real sessions and units in the admin panel, then retire the DEMO units.
 
 ### KI-03 · n8n workflows inactive, credentials missing
 - **Severity:** High.
@@ -133,11 +132,13 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
 - **Evidence:** VERIFIED: `siteConfig.url` defaults to `https://aviatorsregiment.com`, and `NEXT_PUBLIC_SITE_URL` isn't set. The user says no domain is owned yet.
 - **Impact:** canonicals, the sitemap, Open Graph and JSON-LD point to that domain.
 - **Recommended next step:** set `NEXT_PUBLIC_SITE_URL` per environment.
+- **Update (2026-10-02):** production sets it to `https://aviators-regiment.vercel.app`; the sitemap was checked. Change it (and redeploy) when a domain is connected.
 
 ### KI-08 · Deployment not configured or verifiable
 - **Severity:** Medium.
 - **Evidence:** VERIFIED: no Vercel config in the repo, and the Vercel connector returns 403 with no teams visible.
 - **Recommended next step:** re-authenticate the Vercel connector to the client account, create the project, set the environment variables (the secret key must be server-only), and confirm the plan for commercial use.
+- **Update (2026-10-02, VERIFIED):** project `aviators-regiment` in team `aviatorsregiment` (Hobby), deployed with the Vercel CLI from the local folder (no Git connection). Production URL `https://aviators-regiment.vercel.app`; functions run in `bom1` (Mumbai). Still open: Hobby forbids commercial use (upgrade to Pro before launch), and pushes to GitHub don't deploy automatically.
 
 ### KI-09 · No booking capacity control
 - **Severity:** Medium.

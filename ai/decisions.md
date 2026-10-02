@@ -314,6 +314,15 @@ The user asked for four things in the same message: do the recommended audit ite
 - **Affected:** migration 0008, `src/lib/razorpay/`, `app/api/bookings/[code]/razorpay/{order,verify}`, `app/api/razorpay/webhook`, `src/components/razorpay-checkout.tsx`, the booking form, tracking, the admin booking pages, the CSP (scripts from `checkout.razorpay.com` and `cdn.razorpay.com`, frames, `connect-src https://*.razorpay.com`), Permissions-Policy `payment`, and the n8n booking-alert workflow (event `payment.razorpay_paid`).
 - **Trade-offs:** `/track` is a static page, so its online option appears only if the Razorpay keys were set when the site was built. Razorpay ignores obvious dummy phone numbers in the prefill and asks for one.
 
+### D-37 · Production deployed with the Vercel CLI, UPI only until live Razorpay keys
+- **Decision:**
+  - The site is deployed from the local folder with `vercel deploy --prod` to the client's Vercel team, with functions in `bom1`.
+  - Production has no Razorpay keys, so online payment is hidden and the order endpoint returns 503. Live keys go into Vercel once Razorpay activates the account.
+  - Contact, Privacy Policy and Shipping & Delivery pages were added for Razorpay's activation review, with contact details in `NEXT_PUBLIC_` variables (D-34 convention).
+- **Reason:** VERIFIED. The user logged in with the Vercel CLI and asked for the deploy on 2026-10-02. With test keys on a public site, anyone could "pay" through Razorpay's test bank and get a confirmed booking for free.
+- **Affected:** `vercel.json`, `.vercelignore`, `.gitignore` (`.vercel`), the Vercel project environment, `app/(marketing)/{contact,privacy-policy,shipping-policy}`, `src/components/contact-details.tsx`, `src/lib/site-config.ts`.
+- **Trade-offs:** pushes don't deploy (no Git connection yet); the policies are reasonable defaults written from the site's actual behaviour and should be reviewed by the client, ideally with legal advice.
+
 ---
 
 ## Open or pending decisions (not yet made)
@@ -324,7 +333,7 @@ The user asked for four things in the same message: do the recommended audit ite
 | Homepage hero animation that keeps LCP measurable | proposed, not approved (KI-44) | Lighthouse, 2026-10-02 |
 | UPI payee name shown on the site (brand or registered name) or a business UPI ID | needs the user or client (KI-43) | QR decode, 2026-10-02 |
 | Razorpay go-live (KYC, live keys, live webhook) | built and tested in test mode (D-36) | spec §6B |
-| Hosting (Vercel plan, project) and domain | domain not owned yet; Vercel state UNKNOWN | user message, 2026-10-02 |
+| Hosting plan and domain | deployed on Vercel Hobby (D-37); Pro plan and a domain still to decide | user message, 2026-10-02 |
 | Repo ownership (developer versus client GitHub) | undecided | session notes |
 | Aadhaar storage (plaintext under RLS, encryption or minimisation) | access logging added; storage needs a legal decision | KI-05 |
 | Staging database | not created (KI-06) | audit |
