@@ -115,7 +115,7 @@ The empty `.gitkeep` folders remain: lib/{auth,logging,notifications,razorpay,st
 | `/sitemap.xml` | 1 h | Static pages, careers and published news |
 | `/robots.txt` | static | Disallows `/admin` and `/api/` |
 
-### Admin (dynamic, noindex)
+### Admin (`force-dynamic` in `app/admin/layout.tsx`, so it builds without Supabase settings; noindex)
 
 `/admin/login`, `/admin`, `/admin/bookings`, `/admin/bookings/[code]`, `/admin/sessions`, `/admin/units`, `/admin/news`, `/admin/news/[id]`, `/admin/news/sources`, `/admin/careers`, `/admin/careers/[id]`, `/admin/activity`.
 
