@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AadhaarReveal } from "@/src/components/admin/aadhaar-reveal";
 import { ActionForm } from "@/src/components/admin/action-form";
 import { AdminHeader, EmptyState, Panel, Pill } from "@/src/components/admin/admin-ui";
 import { formatDate, formatDateTime, todayInIndia } from "@/src/lib/format";
@@ -52,7 +53,7 @@ function ShipmentSummary({ direction, shipment }: { direction: ShipmentDirection
   if (!shipment) return <p className="admin-muted">Nothing recorded.</p>;
   return <dl className="admin-dl">
     <div><dt>Courier</dt><dd>{shipment.courier ?? "—"}</dd></div>
-    <div><dt>AWB / tracking number</dt><dd>{shipment.awb_number ?? "—"}</dd></div>
+    <div><dt>AWB / order ID</dt><dd>{shipment.awb_number ?? "—"}</dd></div>
     {direction === "outbound" ? <>
       <div><dt>Dispatched</dt><dd>{formatDate(shipment.dispatch_date)}</dd></div>
       <div><dt>Expected delivery</dt><dd>{formatDate(shipment.expected_delivery_date)}</dd></div>
@@ -72,7 +73,7 @@ function ShipmentForm({ code, direction, shipment }: { code: string; direction: 
     <div className="form-grid">
       <label>Status<select name="status" defaultValue={defaultStatus}>{statuses.map((status) => <option key={status} value={status}>{shipmentStatusLabels[status]}</option>)}</select></label>
       <label>Courier<input name="courier" list="courier-list" defaultValue={shipment?.courier ?? ""} /></label>
-      <label>AWB / tracking number<input name="awbNumber" defaultValue={shipment?.awb_number ?? ""} /></label>
+      <label>AWB / order ID<input name="awbNumber" defaultValue={shipment?.awb_number ?? ""} /></label>
       <label>Tracking link<input name="trackingUrl" type="url" placeholder="https://" defaultValue={shipment?.tracking_url ?? ""} /></label>
       {direction === "outbound" ? <>
         <label>Dispatch date<input name="dispatchDate" type="date" defaultValue={shipment ? shipment.dispatch_date ?? "" : todayInIndia()} /></label>
@@ -112,6 +113,8 @@ export default async function BookingDetailPage({ params }: { params: Params }) 
   const outbound = booking.shipments.find((shipment) => shipment.direction === "outbound");
   const inbound = booking.shipments.find((shipment) => shipment.direction === "return");
   const isFinal = booking.status === "closed" || booking.status === "cancelled";
+  // Matches public.admin_set_booking_status: a booking can only be cancelled before the CX-3 leaves.
+  const canCancel = ["payment_pending", "payment_review", "confirmed", "cx3_assigned"].includes(booking.status);
   const amount = formatInr(booking.amount_inr);
   const adminNames = new Map((admins ?? []).map((admin) => [admin.user_id, admin.full_name ?? "Admin"]));
 
@@ -165,7 +168,7 @@ export default async function BookingDetailPage({ params }: { params: Params }) 
             <div><dt>Phone</dt><dd><a href={`tel:+91${booking.phone}`}>{booking.phone}</a> · <a className="admin-link" href={customerWhatsappLink(booking.phone, `Hi ${firstName}, this is Aviator's Regiment about your CX-3 booking ${booking.booking_code}.`)} target="_blank" rel="noreferrer">WhatsApp ↗</a></dd></div>
             <div className="wide"><dt>Email</dt><dd><a href={`mailto:${booking.email}`}>{booking.email}</a></dd></div>
             <div className="wide"><dt>Delivery address</dt><dd className="pre-line">{booking.delivery_address}</dd></div>
-            <div><dt>Aadhaar</dt><dd><details className="reveal"><summary>{maskAadhaar(booking.aadhaar_number)}</summary>{booking.aadhaar_number.replace(/(\d{4})(?=\d)/g, "$1 ")}</details></dd></div>
+            <div><dt>Aadhaar</dt><dd><AadhaarReveal bookingCode={booking.booking_code} masked={maskAadhaar(booking.aadhaar_number)} /></dd></div>
             <div><dt>DGCA computer number</dt><dd>{booking.dgca_number}</dd></div>
             <div><dt>Session</dt><dd>{booking.exam_sessions?.name ?? "—"} ({booking.exam_sessions?.session_type === "OLODE" ? "OLODE" : "Regular"})</dd></div>
             <div><dt>Booked</dt><dd>{formatDateTime(booking.created_at)}</dd></div>
@@ -206,7 +209,7 @@ export default async function BookingDetailPage({ params }: { params: Params }) 
             <input type="hidden" name="bookingCode" value={booking.booking_code} />
             <div className="button-row">
               {booking.status === "cx3_received" ? <button className="admin-button primary" type="submit" name="status" value="closed" data-confirm="Close this booking?">Close booking</button> : null}
-              {!isFinal ? <button className="admin-button danger" type="submit" name="status" value="cancelled" data-confirm="Cancel this booking? Rentals are non-refundable, and any assigned CX-3 is freed.">Cancel booking</button> : null}
+              {canCancel ? <button className="admin-button danger" type="submit" name="status" value="cancelled" data-confirm="Cancel this booking? Rentals are non-refundable, and any assigned CX-3 is freed.">Cancel booking</button> : null}
             </div>
           </ActionForm>
           <details className="advanced">

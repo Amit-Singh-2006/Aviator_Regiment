@@ -2,7 +2,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { ActionForm } from "@/src/components/admin/action-form";
 import { getAdminSession } from "@/src/lib/supabase/auth";
-import { signIn } from "@/src/modules/users/auth-actions";
+import { signIn, signOut } from "@/src/modules/users/auth-actions";
 
 export const metadata = { title: "Sign in" };
 
@@ -23,6 +23,7 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: P
         <label>Password<input type="password" name="password" autoComplete="current-password" required /></label>
         <button className="admin-button primary" type="submit">Sign in</button>
       </ActionForm>
+      {session.status === "not_admin" ? <form action={signOut} className="admin-login-signout"><button type="submit" className="admin-link">Sign out of the other account</button></form> : null}
     </div>
   </main>;
 }

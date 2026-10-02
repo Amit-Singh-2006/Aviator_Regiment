@@ -1,7 +1,7 @@
 import { ActionForm } from "@/src/components/admin/action-form";
 import { AdminHeader, EmptyState, Panel } from "@/src/components/admin/admin-ui";
 import { requireAdmin } from "@/src/lib/supabase/auth";
-import { savePrices, saveSession } from "@/src/modules/exam-sessions/admin-actions";
+import { deleteSession, savePrices, saveSession } from "@/src/modules/exam-sessions/admin-actions";
 import type { ExamSessionStatus } from "@/src/modules/exam-sessions/sessions";
 
 export const metadata = { title: "Sessions & prices" };
@@ -42,7 +42,13 @@ export default async function SessionsPage() {
               <SessionFields session={session} />
               <button className="admin-button" type="submit">Save</button>
             </ActionForm>
-            <small>{session.bookings[0]?.count ?? 0} bookings · ID {session.id}</small>
+            <div className="source-meta">
+              <small>{session.bookings[0]?.count ?? 0} bookings · ID {session.id}</small>
+              {session.bookings[0]?.count ? null : <ActionForm action={deleteSession}>
+                <input type="hidden" name="id" value={session.id} />
+                <button className="admin-link danger" type="submit" data-confirm={`Delete ${session.name}? This can't be undone.`}>Delete</button>
+              </ActionForm>}
+            </div>
           </li>)}</ul> : <EmptyState>No sessions yet. Add the first one below.</EmptyState>}
         </Panel>
         <Panel title="Add a session">

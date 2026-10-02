@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { clientIp, hashIdentifier, isRateLimited, tooManyRequests } from "@/src/lib/rate-limit";
 import { createServiceClient, isBookingServiceConfigured } from "@/src/lib/supabase/server";
 import { BOOKING_ID_PATTERN, normalizeBookingId } from "@/src/modules/bookings/booking-id";
 import { isValidEmail, isValidPhone, normalizePhone } from "@/src/modules/bookings/validation";
@@ -26,6 +27,14 @@ export async function POST(request: Request) {
   if (!BOOKING_ID_PATTERN.test(bookingCode)) return notFound();
   const normalizedContact = isValidPhone(contact) ? normalizePhone(contact) : isValidEmail(contact) ? contact.toLowerCase() : "";
   if (!normalizedContact) return notFound();
+
+  // Limits guessing: per visitor, and per booking ID however many visitors try.
+  if (await isRateLimited([
+    { key: `track:ip:${hashIdentifier(clientIp(request.headers))}`, limit: 30, windowSeconds: 600 },
+    { key: `track:booking:${bookingCode}`, limit: 15, windowSeconds: 600 },
+  ])) {
+    return tooManyRequests();
+  }
 
   const { data, error } = await createServiceClient().rpc("track_booking", { p_booking_code: bookingCode, p_contact: normalizedContact });
   if (error) {

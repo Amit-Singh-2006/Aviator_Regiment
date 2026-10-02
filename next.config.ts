@@ -14,6 +14,24 @@ if (process.env.NODE_ENV === "production" && missingEnv.length > 0 && !process.e
   console.warn(`⚠ Missing ${missingEnv.join(", ")}: bookings, WhatsApp links or UPI payment details will not work fully. See .env.example.`);
 }
 
+const isDev = process.env.NODE_ENV !== "production";
+
+// Next.js adds inline scripts, so scripts and styles allow 'unsafe-inline'; development
+// also needs eval and a websocket for hot reload. Images may come from any HTTPS host
+// (news images, signed links to private documents in the admin panel).
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self'",
+  `connect-src 'self'${isDev ? " ws: wss:" : ""}`,
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+].join("; ");
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
@@ -22,6 +40,21 @@ const nextConfig: NextConfig = {
   // News images are uploaded through a server action (up to 5 MB plus form fields).
   experimental: {
     serverActions: { bodySizeLimit: "6mb" },
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Content-Security-Policy", value: contentSecurityPolicy },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+        ],
+      },
+    ];
   },
 };
 

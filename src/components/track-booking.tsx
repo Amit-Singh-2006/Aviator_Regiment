@@ -3,11 +3,13 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
+import { UpiPaymentDetails } from "@/src/components/upi-payment-details";
 import { whatsappLink, whatsappMessages } from "@/src/lib/whatsapp";
 import { BOOKING_ID_PATTERN, normalizeBookingId } from "@/src/modules/bookings/booking-id";
 import { bookingStatusLabels, deliveryMilestones, hasReached, paymentStatusLabels, returnMilestones } from "@/src/modules/bookings/tracking";
 import type { BookingStatus, TrackedBooking, TrackedShipment } from "@/src/modules/bookings/tracking";
-import { isValidEmail, isValidPhone } from "@/src/modules/bookings/validation";
+import { isValidEmail, isValidPhone, validateImageFile } from "@/src/modules/bookings/validation";
+import { formatInr } from "@/src/modules/exam-sessions/sessions";
 
 const dateFormat = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
 const formatDate = (value: string | null) => (value ? dateFormat.format(new Date(value)) : null);
@@ -23,7 +25,7 @@ function ShipmentDetails({ shipment, label }: { shipment?: TrackedShipment; labe
   if (!shipment || (!shipment.courier && !shipment.awbNumber && !shipment.trackingUrl)) return null;
   const rows = [
     ["Courier", shipment.courier],
-    ["AWB / tracking number", shipment.awbNumber],
+    ["AWB / tracking / order ID", shipment.awbNumber],
     ["Dispatched", formatDate(shipment.dispatchDate)],
     ["Pickup date", formatDate(shipment.pickupDate)],
     ["Expected delivery", formatDate(shipment.expectedDeliveryDate)],
@@ -36,6 +38,56 @@ function ShipmentDetails({ shipment, label }: { shipment?: TrackedShipment; labe
   </div>;
 }
 
+// Lets a customer pay and upload the screenshot after leaving the booking flow,
+// or try again after a payment was rejected.
+function PaymentPanel({ booking, contact, onUploaded }: { booking: TrackedBooking; contact: string; onUploaded: () => Promise<void> }) {
+  const [screenshot, setScreenshot] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+  const amount = formatInr(booking.amountInr);
+  const rejected = booking.paymentStatus === "rejected";
+
+  async function upload() {
+    const fileError = validateImageFile(screenshot, "Choose your payment screenshot to upload.");
+    if (fileError || !screenshot) {
+      setMessage(fileError ?? "");
+      return;
+    }
+    setSubmitting(true);
+    setMessage("");
+    const body = new FormData();
+    body.set("contact", contact);
+    body.set("screenshot", screenshot);
+    try {
+      const response = await fetch(`/api/bookings/${booking.bookingCode}/payment-proof`, { method: "POST", body });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setMessage(result.message ?? "We couldn't submit your screenshot. Please try again.");
+        return;
+      }
+      await onUploaded();
+    } catch {
+      setMessage("Network error. Check your connection and try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return <div className="upi-card track-payment">
+    <p className="eyebrow">{rejected ? "Payment not verified" : "Complete your payment"}</p>
+    {rejected
+      ? <p className="form-error">We couldn&apos;t verify your payment{booking.paymentNote ? `: ${booking.paymentNote}` : "."} If you haven&apos;t paid the full amount, pay it now, then upload a new screenshot.</p>
+      : <p className="track-payment-intro">Pay by UPI, then upload your payment screenshot so we can verify it and confirm your booking.</p>}
+    <UpiPaymentDetails amount={amount} bookingId={booking.bookingCode} />
+    <label className="upload-label">Payment screenshot<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { setScreenshot(event.target.files?.[0] ?? null); setMessage(""); }} /><small>JPG, PNG or WebP, up to 5 MB. Stored privately and only seen by our team.</small></label>
+    {message && <p className="form-error upi-error" role="alert">{message}</p>}
+    <div className="upi-actions">
+      <button type="button" className="button button-primary submit-button" onClick={upload} disabled={submitting}>{submitting ? "Uploading…" : "Submit payment screenshot"}</button>
+      <a className="button button-ghost submit-button" href={whatsappLink(whatsappMessages.upiPayment(booking.bookingCode, booking.sessionName, amount))} target="_blank" rel="noreferrer">Share screenshot on WhatsApp ↗</a>
+    </div>
+  </div>;
+}
+
 // Reads ?booking= (linked from the booking confirmation) to prefill the form.
 export function TrackBookingFromLink() {
   const initialBookingId = useSearchParams().get("booking") ?? "";
@@ -44,27 +96,13 @@ export function TrackBookingFromLink() {
 
 export function TrackBooking({ initialBookingId = "" }: { initialBookingId?: string }) {
   const [booking, setBooking] = useState<TrackedBooking | null>(null);
+  const [contact, setContact] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const bookingId = normalizeBookingId(String(form.get("bookingId") ?? ""));
-    const contact = String(form.get("contact") ?? "").trim();
-    if (!BOOKING_ID_PATTERN.test(bookingId)) {
-      setError("Enter the Booking ID from your confirmation, for example AR2026091842.");
-      return;
-    }
-    if (!isValidPhone(contact) && !isValidEmail(contact)) {
-      setError("Enter the phone number or email address used for the booking.");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
+  async function load(bookingId: string, contactValue: string) {
     try {
-      const response = await fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bookingId, contact }) });
+      const response = await fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bookingId, contact: contactValue }) });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) {
         setBooking(null);
@@ -72,11 +110,30 @@ export function TrackBooking({ initialBookingId = "" }: { initialBookingId?: str
         return;
       }
       setBooking(result as TrackedBooking);
+      setContact(contactValue);
     } catch {
       setError("Network error. Check your connection and try again.");
-    } finally {
-      setLoading(false);
     }
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const bookingId = normalizeBookingId(String(form.get("bookingId") ?? ""));
+    const contactValue = String(form.get("contact") ?? "").trim();
+    if (!BOOKING_ID_PATTERN.test(bookingId)) {
+      setError("Enter the Booking ID from your confirmation, for example AR2026091842.");
+      return;
+    }
+    if (!isValidPhone(contactValue) && !isValidEmail(contactValue)) {
+      setError("Enter the phone number or email address used for the booking.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    await load(bookingId, contactValue);
+    setLoading(false);
   }
 
   const outbound = booking?.shipments.find((shipment) => shipment.direction === "outbound");
@@ -95,11 +152,12 @@ export function TrackBooking({ initialBookingId = "" }: { initialBookingId?: str
       {booking.status === "cancelled"
         ? <p className="demo-note">This booking has been cancelled. <a href={whatsappLink(whatsappMessages.bookingUpdate(booking.bookingCode))} target="_blank" rel="noreferrer">Message us on WhatsApp</a> if you have questions.</p>
         : <>
+          {booking.status === "payment_pending" && <PaymentPanel booking={booking} contact={contact} onUploaded={() => load(booking.bookingCode, contact)} />}
+          {booking.status === "payment_review" && <p className="tracking-note">We&apos;ve received your payment screenshot and will verify it shortly. Your booking is confirmed once the payment is verified.</p>}
           <h3 className="tracking-section-title">Delivery</h3>
           <Timeline status={booking.status} milestones={deliveryMilestones} />
           <ShipmentDetails shipment={outbound} label="Courier details" />
           {showReturn && <><h3 className="tracking-section-title">Return</h3><p className="tracking-note">We arrange the return pickup after your exam period. You don&apos;t need to book it yourself.</p><Timeline status={booking.status} milestones={returnMilestones} /><ShipmentDetails shipment={returnShipment} label="Return courier details" /></>}
-          {booking.paymentStatus === "rejected" && <p className="form-error">We couldn&apos;t verify your payment. Please message us on WhatsApp with your Booking ID.</p>}
           <p className="demo-note">Questions about your booking? <a href={whatsappLink(whatsappMessages.bookingUpdate(booking.bookingCode))} target="_blank" rel="noreferrer">Message us on WhatsApp</a> with your Booking ID.</p>
         </>}
     </div></section>}

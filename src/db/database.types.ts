@@ -131,6 +131,89 @@ export type Database = {
           },
         ]
       }
+      career_companies: {
+        Row: {
+          careers_url: string
+          created_at: string
+          id: string
+          name: string
+          note: string | null
+          published: boolean
+          role_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          careers_url: string
+          created_at?: string
+          id?: string
+          name: string
+          note?: string | null
+          published?: boolean
+          role_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          careers_url?: string
+          created_at?: string
+          id?: string
+          name?: string
+          note?: string | null
+          published?: boolean
+          role_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "career_companies_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "career_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      career_roles: {
+        Row: {
+          created_at: string
+          enquiry: string
+          guide: string | null
+          id: string
+          name: string
+          published: boolean
+          slug: string
+          sort_order: number
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enquiry: string
+          guide?: string | null
+          id?: string
+          name: string
+          published?: boolean
+          slug: string
+          sort_order?: number
+          summary?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enquiry?: string
+          guide?: string | null
+          id?: string
+          name?: string
+          published?: boolean
+          slug?: string
+          sort_order?: number
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cx3_assignments: {
         Row: {
           assigned_at: string
@@ -546,6 +629,10 @@ export type Database = {
           p_status: Database["public"]["Enums"]["booking_status"]
         }
         Returns: Database["public"]["Enums"]["booking_status"]
+      }
+      consume_rate_limit: {
+        Args: { p_key: string; p_limit: number; p_window_seconds: number }
+        Returns: boolean
       }
       create_booking: {
         Args: {

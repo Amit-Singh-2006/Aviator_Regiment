@@ -4,7 +4,7 @@ import { ActionForm } from "@/src/components/admin/action-form";
 import { AdminHeader, Panel, Pill } from "@/src/components/admin/admin-ui";
 import { formatDateTime } from "@/src/lib/format";
 import { requireAdmin } from "@/src/lib/supabase/auth";
-import { saveArticle, setArticleImageLink, uploadArticleImage } from "@/src/modules/news/admin-actions";
+import { deleteArticle, saveArticle, setArticleImageLink, uploadArticleImage } from "@/src/modules/news/admin-actions";
 import { newsCategories, newsCategoryLabels, newsStatusLabels, newsStatusTone, type NewsStatus } from "@/src/modules/news/categories";
 import { Markdown } from "@/src/modules/news/markdown";
 
@@ -22,8 +22,10 @@ function ActionButtons({ status }: { status: NewsStatus }) {
       return <><button className="admin-button" type="submit" name="intent" value="save">Save</button>{publish}<button className="admin-button" type="submit" name="intent" value="restore">Back to drafts</button>{reject}</>;
     case "rejected":
       return <><button className="admin-button" type="submit" name="intent" value="save">Save</button><button className="admin-button primary" type="submit" name="intent" value="restore">Move back to drafts</button></>;
+    case "review":
+      return <><button className="admin-button" type="submit" name="intent" value="save">Save</button><button className="admin-button" type="submit" name="intent" value="approve">Approve</button>{publish}<button className="admin-button" type="submit" name="intent" value="restore">Back to drafts</button>{reject}</>;
     default:
-      return <><button className="admin-button" type="submit" name="intent" value="save">Save draft</button><button className="admin-button" type="submit" name="intent" value="approve">Approve</button>{publish}{reject}</>;
+      return <><button className="admin-button" type="submit" name="intent" value="save">Save draft</button><button className="admin-button" type="submit" name="intent" value="review">Send for review</button><button className="admin-button" type="submit" name="intent" value="approve">Approve</button>{publish}{reject}</>;
   }
 }
 
@@ -111,5 +113,13 @@ export default async function NewsEditorPage({ params }: { params: Params }) {
       {article.summary ? <p className="preview-summary">{article.summary}</p> : null}
       <div className="article-body"><Markdown source={article.body} /></div>
     </Panel> : null}
+
+    <Panel title="Delete article" className="danger-panel">
+      <p className="admin-muted">Deleting removes the article for good, including from the website if it&apos;s published. To keep a record instead, reject it.</p>
+      <ActionForm action={deleteArticle}>
+        <input type="hidden" name="id" value={article.id} />
+        <button className="admin-button danger" type="submit" data-confirm="Delete this article for good? This can't be undone.">Delete article</button>
+      </ActionForm>
+    </Panel>
   </>;
 }

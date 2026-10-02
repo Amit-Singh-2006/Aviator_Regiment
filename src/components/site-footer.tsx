@@ -10,6 +10,7 @@ const exploreLinks = [
   { href: "/careers", label: "Careers" },
   { href: "/coaching", label: "Coaching" },
   { href: "/community", label: "Community" },
+  { href: "/marketplace", label: "Marketplace" },
   { href: "/about", label: "About" },
 ];
 

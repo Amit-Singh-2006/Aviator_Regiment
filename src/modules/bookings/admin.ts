@@ -29,7 +29,8 @@ export const shipmentStatusLabels: Record<ShipmentStatus, string> = {
 
 export const outboundStatuses: ShipmentStatus[] = ["pending", "dispatched", "in_transit", "out_for_delivery", "delivered"];
 export const returnStatuses: ShipmentStatus[] = ["pending", "pickup_scheduled", "in_transit", "received"];
-export const couriers = ["Delhivery", "Blue Dart", "DTDC", "India Post", "Ekart", "Xpressbees", "Shadowfax", "Shiprocket"];
+// Couriers Aviator's Regiment uses (Rapido and Uber for same-city deliveries).
+export const couriers = ["Delhivery", "DTDC", "Rapido", "Uber"];
 
 export function bookingTone(status: BookingStatus): Tone {
   if (status === "payment_review") return "warn";

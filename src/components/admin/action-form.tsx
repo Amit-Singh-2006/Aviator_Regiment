@@ -16,6 +16,8 @@ export function ActionForm({ action, children, className }: { action: (formData:
     const question = submitter?.dataset.confirm;
     if (question && !window.confirm(question)) return;
     const formData = new FormData(event.currentTarget, submitter);
+    // Browsers without FormData's submitter argument leave out the clicked button's value.
+    if (submitter instanceof HTMLButtonElement && submitter.name && !formData.has(submitter.name)) formData.append(submitter.name, submitter.value);
     setResult(undefined);
     startTransition(async () => setResult(await action(formData)));
   }

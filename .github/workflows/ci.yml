@@ -1,0 +1,29 @@
+# Lint, unit tests, production build and typecheck on every push to main and on pull requests.
+# The build runs without Supabase settings: public pages that need data render empty,
+# and nothing is deployed from here.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      # After the build, which generates the route types that next-env.d.ts references.
+      - run: npm run typecheck

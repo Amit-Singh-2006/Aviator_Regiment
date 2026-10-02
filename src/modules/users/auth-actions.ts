@@ -1,13 +1,23 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/src/components/admin/action-form";
+import { clientIp, hashIdentifier, isRateLimited } from "@/src/lib/rate-limit";
 import { createAuthClient } from "@/src/lib/supabase/auth";
 
 export async function signIn(formData: FormData): Promise<ActionResult> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   if (!email || !password) return { error: "Enter your email and password." };
+
+  // Slows down password guessing, per visitor and per account.
+  if (await isRateLimited([
+    { key: `login:ip:${hashIdentifier(clientIp(await headers()))}`, limit: 10, windowSeconds: 600 },
+    { key: `login:email:${hashIdentifier(email)}`, limit: 8, windowSeconds: 600 },
+  ])) {
+    return { error: "Too many sign-in attempts. Wait 10 minutes and try again." };
+  }
 
   const supabase = await createAuthClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });

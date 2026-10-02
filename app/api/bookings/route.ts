@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { clientIp, hashIdentifier, isRateLimited, tooManyRequests } from "@/src/lib/rate-limit";
 import { BOOKING_DOCUMENTS_BUCKET, createServiceClient, isBookingServiceConfigured } from "@/src/lib/supabase/server";
 import { TERMS_VERSION } from "@/src/modules/bookings/terms";
 import { readImageUpload } from "@/src/modules/bookings/uploads";
@@ -40,6 +41,15 @@ export async function POST(request: Request) {
   if ("error" in photo) errors.passportPhoto = photo.error;
   if (!result.success || "error" in photo) {
     return NextResponse.json({ message: "Please correct the highlighted booking details.", errors }, { status: 422 });
+  }
+
+  // Counted only for complete submissions, so fixing a typo doesn't use up attempts.
+  const ip = hashIdentifier(clientIp(request.headers));
+  if (await isRateLimited([
+    { key: `booking:ip:${ip}`, limit: 8, windowSeconds: 600 },
+    { key: `booking:ip-day:${ip}`, limit: 40, windowSeconds: 86400 },
+  ])) {
+    return tooManyRequests();
   }
 
   const supabase = createServiceClient();

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/src/components/admin/action-form";
 import { requireAdmin } from "@/src/lib/supabase/auth";
 import { adminErrorMessage } from "@/src/lib/supabase/errors";
+import { recordAudit } from "@/src/modules/audit/record";
 import { outboundStatuses, returnStatuses, type ShipmentStatus } from "@/src/modules/bookings/admin";
 import { BOOKING_ID_PATTERN } from "@/src/modules/bookings/booking-id";
 import { bookingStatusLabels, type BookingStatus } from "@/src/modules/bookings/tracking";
@@ -73,7 +74,10 @@ export async function saveShipment(formData: FormData): Promise<ActionResult> {
   const [dispatchDate, pickupDate, expectedDeliveryDate, receivedDate] = dates;
   const courier = text(formData, "courier").slice(0, 80);
   const awbNumber = text(formData, "awbNumber").slice(0, 80);
-  if (status !== "pending" && (!courier || !awbNumber)) return { error: "Add the courier and AWB number so the customer can track it." };
+  // Rapido and Uber trips have no AWB, so a tracking link is enough on its own.
+  if (status !== "pending" && (!courier || (!awbNumber && !trackingUrl))) {
+    return { error: "Add the courier and an AWB / order ID or tracking link so the customer can follow it." };
+  }
 
   const { error } = await supabase.rpc("admin_save_shipment", {
     p_booking_code: code,
@@ -115,4 +119,14 @@ export async function saveAdminNotes(formData: FormData): Promise<ActionResult> 
   if (error) return { error: adminErrorMessage(error) };
   refresh();
   return { ok: "Notes saved." };
+}
+
+// Shows an admin the full Aadhaar number on request and records who viewed it.
+export async function revealAadhaar(bookingCode: string): Promise<{ aadhaar?: string; error?: string }> {
+  const { supabase, userId } = await requireAdmin();
+  if (!BOOKING_ID_PATTERN.test(bookingCode)) return { error: "Invalid booking." };
+  const { data } = await supabase.from("bookings").select("aadhaar_number").eq("booking_code", bookingCode).maybeSingle();
+  if (!data) return { error: "That booking no longer exists." };
+  await recordAudit(supabase, { actor_id: userId, action: "booking.aadhaar_viewed", entity: "booking", entity_id: bookingCode });
+  return { aadhaar: data.aadhaar_number.replace(/(\d{4})(?=\d)/g, "$1 ") };
 }

@@ -17,6 +17,11 @@ export function createPublicClient() {
   return createClient<Database>(url, publishableKey, options);
 }
 
+// False in builds without Supabase settings (e.g. CI), where public data is skipped.
+export function isPublicDataConfigured() {
+  return Boolean(url && publishableKey);
+}
+
 export function isBookingServiceConfigured() {
   return Boolean(url && secretKey);
 }

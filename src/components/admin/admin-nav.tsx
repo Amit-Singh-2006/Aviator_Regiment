@@ -10,6 +10,7 @@ const links = [
   { href: "/admin/units", label: "CX-3 units" },
   { href: "/admin/news", label: "News" },
   { href: "/admin/news/sources", label: "News sources" },
+  { href: "/admin/careers", label: "Careers" },
   { href: "/admin/activity", label: "Activity" },
 ];
 

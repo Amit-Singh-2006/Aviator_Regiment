@@ -22,6 +22,16 @@ const actionLabels: Record<string, string> = {
   "news_source.added": "News source added",
   "news_source.updated": "News source updated",
   "news_source.removed": "News source removed",
+  "news.review": "Article sent for review",
+  "news.delete": "Article deleted",
+  "session.deleted": "Exam session deleted",
+  "booking.aadhaar_viewed": "Full Aadhaar number viewed",
+  "career_role.created": "Career added",
+  "career_role.updated": "Career updated",
+  "career_role.deleted": "Career deleted",
+  "career_company.added": "Company added to a career",
+  "career_company.updated": "Company link updated",
+  "career_company.removed": "Company removed from a career",
 };
 
 export function describeAction(action: string) {

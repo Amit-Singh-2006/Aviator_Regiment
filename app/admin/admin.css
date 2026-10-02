@@ -130,9 +130,6 @@
 .admin-dl dd { margin: 5px 0 0; color: var(--ink); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
 .admin-dl dd a:not(.admin-link) { color: var(--navy); text-decoration: underline; text-decoration-color: var(--line); }
 .pre-line { white-space: pre-line; }
-.reveal summary { cursor: pointer; list-style: none; }
-.reveal summary::after { content: "  show"; color: var(--gold-ink); font-size: 12px; font-weight: 800; }
-.reveal[open] summary::after { content: "  hide"; }
 .advanced { margin-top: 16px; }
 .advanced summary { color: var(--muted); cursor: pointer; font-size: 13px; font-weight: 700; }
 .advanced[open] summary { margin-bottom: 12px; }
@@ -206,3 +203,13 @@
   .input-prefix span { display: none; }
   .input-prefix input { border-radius: 6px !important; }
 }
+
+/* Error page, delete areas, careers editor, Aadhaar reveal */
+.admin-error-title { margin: 6px 0 0; font-size: 26px; letter-spacing: -.03em; }
+.admin-error-actions { margin-top: 18px; }
+.danger-panel { border-color: #f0d3ce; }
+.danger-zone { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.source-row label.narrow, .session-row label.narrow { flex: 0 1 90px; }
+.aadhaar-reveal { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
+.aadhaar-error { color: #a3301f; font-size: 12px; }
+.admin-login-signout { margin-top: 14px; text-align: center; }

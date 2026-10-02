@@ -5,6 +5,7 @@ import type { ActionResult } from "@/src/components/admin/action-form";
 import type { Enums } from "@/src/db/database.types";
 import { requireAdmin } from "@/src/lib/supabase/auth";
 import { adminErrorMessage } from "@/src/lib/supabase/errors";
+import { recordAudit } from "@/src/modules/audit/record";
 
 type UnitStatus = Enums<"cx3_unit_status">;
 
@@ -19,7 +20,7 @@ export async function addUnit(formData: FormData): Promise<ActionResult> {
 
   const { error } = await supabase.from("cx3_units").insert({ unit_code: unitCode, notes: notes || null });
   if (error) return { error: error.code === "23505" ? `${unitCode} already exists.` : adminErrorMessage(error) };
-  await supabase.from("audit_log").insert({ actor_id: userId, action: "cx3.added", entity: "cx3_unit", entity_id: unitCode });
+  await recordAudit(supabase, { actor_id: userId, action: "cx3.added", entity: "cx3_unit", entity_id: unitCode });
   revalidatePath("/admin", "layout");
   return { ok: `${unitCode} added.` };
 }
@@ -39,7 +40,7 @@ export async function updateUnit(formData: FormData): Promise<ActionResult> {
 
   const { error } = await supabase.from("cx3_units").update({ notes: notes || null, ...(changesStatus ? { status } : {}) }).eq("id", id);
   if (error) return { error: adminErrorMessage(error) };
-  if (changesStatus) await supabase.from("audit_log").insert({ actor_id: userId, action: "cx3.status_set", entity: "cx3_unit", entity_id: unit.unit_code, details: { from: unit.status, to: status } });
+  if (changesStatus) await recordAudit(supabase, { actor_id: userId, action: "cx3.status_set", entity: "cx3_unit", entity_id: unit.unit_code, details: { from: unit.status, to: status } });
   revalidatePath("/admin", "layout");
   return { ok: "Unit saved." };
 }

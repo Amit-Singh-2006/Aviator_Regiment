@@ -6,7 +6,7 @@ import type { NewsCategory } from "@/src/modules/news/categories";
 const listColumns = "slug, title, summary, category, image_url, image_alt, published_at, source_name, is_featured";
 
 // Published articles only; row level security hides everything else from the public key.
-export async function getPublishedArticles({ category, limit = 30, excludeSlug }: { category?: NewsCategory; limit?: number; excludeSlug?: string } = {}) {
+export async function getPublishedArticles({ category, limit = 30, excludeSlug, search }: { category?: NewsCategory; limit?: number; excludeSlug?: string; search?: string } = {}) {
   let query = createPublicClient()
     .from("news_articles")
     .select(listColumns)
@@ -16,6 +16,7 @@ export async function getPublishedArticles({ category, limit = 30, excludeSlug }
     .limit(limit);
   if (category) query = query.eq("category", category);
   if (excludeSlug) query = query.neq("slug", excludeSlug);
+  if (search) query = query.or(`title.ilike.%${search}%,summary.ilike.%${search}%`);
   const { data, error } = await query;
   if (error) throw new Error(`Couldn't load news: ${error.message}`);
   return data;

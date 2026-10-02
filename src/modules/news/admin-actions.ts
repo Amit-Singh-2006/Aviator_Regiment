@@ -2,15 +2,17 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import type { ActionResult } from "@/src/components/admin/action-form";
 import { requireAdmin } from "@/src/lib/supabase/auth";
 import { adminErrorMessage } from "@/src/lib/supabase/errors";
+import { recordAudit } from "@/src/modules/audit/record";
 import { readImageUpload } from "@/src/modules/bookings/uploads";
 import { newsCategoryLabels, type NewsCategory, type NewsStatus } from "@/src/modules/news/categories";
 
 const NEWS_IMAGES_BUCKET = "news-images";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const intents = ["save", "approve", "publish", "unpublish", "reject", "restore"] as const;
+const intents = ["save", "review", "approve", "publish", "unpublish", "reject", "restore"] as const;
 type Intent = (typeof intents)[number];
 
 function text(formData: FormData, name: string, max: number) {
@@ -35,6 +37,7 @@ function refreshNews(...slugs: (string | null | undefined)[]) {
 
 const nextStatus: Record<Intent, (current: NewsStatus) => NewsStatus> = {
   save: (current) => (current === "detected" ? "draft" : current),
+  review: () => "review",
   approve: () => "approved",
   publish: () => "published",
   unpublish: () => "approved",
@@ -44,6 +47,7 @@ const nextStatus: Record<Intent, (current: NewsStatus) => NewsStatus> = {
 
 const intentMessages: Record<Intent, string> = {
   save: "Saved.",
+  review: "Sent for review.",
   approve: "Approved. Publish it when you're ready.",
   publish: "Published. It's live on the Aviation News page.",
   unpublish: "Unpublished. It's no longer on the website.",
@@ -99,7 +103,7 @@ export async function saveArticle(formData: FormData): Promise<ActionResult> {
   }).eq("id", id);
   if (error) return { error: error.code === "23505" ? "Another article already uses this URL slug. Change the slug." : adminErrorMessage(error) };
 
-  if (intent !== "save") await supabase.from("audit_log").insert({ actor_id: userId, action: `news.${intent}`, entity: "news_article", entity_id: id, details: { title } });
+  if (intent !== "save") await recordAudit(supabase, { actor_id: userId, action: `news.${intent}`, entity: "news_article", entity_id: id, details: { title } });
   refreshNews(current.slug, slug);
   return { ok: intentMessages[intent] };
 }
@@ -137,6 +141,23 @@ export async function uploadArticleImage(formData: FormData): Promise<ActionResu
   return { ok: "Image uploaded. Add alt text and credit, then save." };
 }
 
+// Deletes an article and its uploaded image. Published articles disappear from the site.
+export async function deleteArticle(formData: FormData): Promise<ActionResult> {
+  const { supabase, userId } = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!UUID_PATTERN.test(id)) return { error: "Invalid request." };
+
+  const { data: article, error } = await supabase.from("news_articles").delete().eq("id", id).select("slug, title, source_title, image_url").maybeSingle();
+  if (error) return { error: adminErrorMessage(error) };
+  if (!article) return { error: "That article no longer exists." };
+  const image = storagePath(article.image_url);
+  if (image) await supabase.storage.from(NEWS_IMAGES_BUCKET).remove([image]);
+
+  await recordAudit(supabase, { actor_id: userId, action: "news.delete", entity: "news_article", entity_id: id, details: { title: article.title ?? article.source_title } });
+  refreshNews(article.slug);
+  redirect("/admin/news");
+}
+
 export async function setArticleImageLink(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireAdmin();
   const id = String(formData.get("id") ?? "");
@@ -169,7 +190,7 @@ export async function saveSource(formData: FormData): Promise<ActionResult> {
   const values = { name, url, default_category: category, active: formData.get("active") === "on" };
   const { error } = id ? await supabase.from("news_sources").update(values).eq("id", id) : await supabase.from("news_sources").insert(values);
   if (error) return { error: error.code === "23505" ? "That feed is already in the list." : adminErrorMessage(error) };
-  await supabase.from("audit_log").insert({ actor_id: userId, action: id ? "news_source.updated" : "news_source.added", entity: "news_source", entity_id: id || url, details: values });
+  await recordAudit(supabase, { actor_id: userId, action: id ? "news_source.updated" : "news_source.added", entity: "news_source", entity_id: id || url, details: values });
   revalidatePath("/admin", "layout");
   return { ok: id ? "Source saved." : `${name} added. It's checked on the next run (every 3 hours).` };
 }
@@ -180,7 +201,7 @@ export async function deleteSource(formData: FormData): Promise<ActionResult> {
   if (!UUID_PATTERN.test(id)) return { error: "Invalid request." };
   const { data: source, error } = await supabase.from("news_sources").delete().eq("id", id).select("name").maybeSingle();
   if (error) return { error: adminErrorMessage(error) };
-  await supabase.from("audit_log").insert({ actor_id: userId, action: "news_source.removed", entity: "news_source", entity_id: id, details: { name: source?.name } });
+  await recordAudit(supabase, { actor_id: userId, action: "news_source.removed", entity: "news_source", entity_id: id, details: { name: source?.name ?? null } });
   revalidatePath("/admin", "layout");
   return { ok: "Source removed. Articles already collected from it are kept." };
 }

@@ -23,6 +23,8 @@ export type TrackedBooking = {
   amountInr: number;
   createdAt: string;
   paymentStatus: PaymentStatus | null;
+  // The admin's reason, only when the latest payment was rejected.
+  paymentNote: string | null;
   cx3Unit: string | null;
   shipments: TrackedShipment[];
 };

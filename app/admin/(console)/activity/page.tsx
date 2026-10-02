@@ -10,6 +10,7 @@ function entityLink(entity: string, entityId: string | null) {
   if (!entityId) return null;
   if (entity === "booking") return `/admin/bookings/${entityId}`;
   if (entity === "news_article") return `/admin/news/${entityId}`;
+  if (entity === "career_role") return `/admin/careers/${entityId}`;
   return null;
 }
 

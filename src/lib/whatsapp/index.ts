@@ -11,6 +11,8 @@ export const whatsappMessages = {
   coaching: "Hi Aviator's Regiment, I would like to know more about your coaching classes.",
   community: "Hi Aviator's Regiment, I would like to join the Aviator's Regiment community.",
   sessionUpdates: "Hi Aviator's Regiment, please let me know when the next CX-3 rental sessions open.",
+  marketplace: "Hi Aviator's Regiment, please let me know when the Aviation Marketplace opens.",
+  marketplaceSeller: "Hi Aviator's Regiment, I would like to sell aviation products on the Aviator's Regiment Marketplace.",
   career: (topic: string) => `Hi Aviator's Regiment, I would like guidance on ${topic}.`,
   upiPayment: (bookingId: string, sessionName: string, amount: string) =>
     `Hi Aviator's Regiment, my Booking ID is ${bookingId}. I have completed the UPI payment of ${amount} for ${sessionName}. Sharing my payment screenshot here.`,

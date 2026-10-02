@@ -6,6 +6,12 @@ const knownErrors: Record<string, string> = {
   booking_closed: "This booking is closed or cancelled, so it can't be changed.",
   unit_unavailable: "That CX-3 unit isn't available any more. Pick another unit.",
   invalid_shipment_status: "That status doesn't apply to this shipment.",
+  assign_unit_first: "Assign a CX-3 unit first.",
+  cannot_cancel_after_dispatch: "The CX-3 has already been sent, so this booking can't be cancelled. Record the return, then close the booking.",
+  cannot_close_yet: "Close the booking once the CX-3 has been received back.",
+  return_in_progress: "The return has started, so the delivery stays delivered. You can still correct the courier details.",
+  not_delivered_yet: "Record the return after the CX-3 has been delivered.",
+  return_already_received: "The CX-3 has already been received back.",
 };
 
 export function adminErrorMessage(error: { message: string; code?: string }) {
