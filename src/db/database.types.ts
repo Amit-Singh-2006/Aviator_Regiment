@@ -238,6 +238,144 @@ export type Database = {
           },
         ]
       }
+      news_articles: {
+        Row: {
+          ai_model: string | null
+          body: string | null
+          category: Database["public"]["Enums"]["news_category"]
+          created_at: string
+          id: string
+          image_alt: string | null
+          image_credit: string | null
+          image_url: string | null
+          is_featured: boolean
+          keywords: string[]
+          meta_description: string | null
+          meta_title: string | null
+          possible_duplicate_of: string | null
+          published_at: string | null
+          reviewed_by: string | null
+          slug: string | null
+          source_id: string | null
+          source_name: string
+          source_published_at: string | null
+          source_summary: string | null
+          source_title: string
+          source_url: string
+          status: Database["public"]["Enums"]["news_status"]
+          summary: string | null
+          tags: string[]
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_model?: string | null
+          body?: string | null
+          category?: Database["public"]["Enums"]["news_category"]
+          created_at?: string
+          id?: string
+          image_alt?: string | null
+          image_credit?: string | null
+          image_url?: string | null
+          is_featured?: boolean
+          keywords?: string[]
+          meta_description?: string | null
+          meta_title?: string | null
+          possible_duplicate_of?: string | null
+          published_at?: string | null
+          reviewed_by?: string | null
+          slug?: string | null
+          source_id?: string | null
+          source_name: string
+          source_published_at?: string | null
+          source_summary?: string | null
+          source_title: string
+          source_url: string
+          status?: Database["public"]["Enums"]["news_status"]
+          summary?: string | null
+          tags?: string[]
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_model?: string | null
+          body?: string | null
+          category?: Database["public"]["Enums"]["news_category"]
+          created_at?: string
+          id?: string
+          image_alt?: string | null
+          image_credit?: string | null
+          image_url?: string | null
+          is_featured?: boolean
+          keywords?: string[]
+          meta_description?: string | null
+          meta_title?: string | null
+          possible_duplicate_of?: string | null
+          published_at?: string | null
+          reviewed_by?: string | null
+          slug?: string | null
+          source_id?: string | null
+          source_name?: string
+          source_published_at?: string | null
+          source_summary?: string | null
+          source_title?: string
+          source_url?: string
+          status?: Database["public"]["Enums"]["news_status"]
+          summary?: string | null
+          tags?: string[]
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_articles_possible_duplicate_of_fkey"
+            columns: ["possible_duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "news_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_articles_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "news_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_sources: {
+        Row: {
+          active: boolean
+          created_at: string
+          default_category: Database["public"]["Enums"]["news_category"]
+          id: string
+          last_checked_at: string | null
+          name: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          default_category?: Database["public"]["Enums"]["news_category"]
+          id?: string
+          last_checked_at?: string | null
+          name: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          default_category?: Database["public"]["Enums"]["news_category"]
+          id?: string
+          last_checked_at?: string | null
+          name?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount_inr: number
@@ -379,6 +517,36 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_assign_unit: {
+        Args: { p_booking_code: string; p_unit_id: string }
+        Returns: Database["public"]["Enums"]["booking_status"]
+      }
+      admin_review_payment: {
+        Args: { p_approve: boolean; p_booking_code: string; p_reason?: string }
+        Returns: Database["public"]["Enums"]["booking_status"]
+      }
+      admin_save_shipment: {
+        Args: {
+          p_awb_number: string
+          p_booking_code: string
+          p_courier: string
+          p_direction: Database["public"]["Enums"]["shipment_direction"]
+          p_dispatch_date: string
+          p_expected_delivery_date: string
+          p_pickup_date: string
+          p_received_date: string
+          p_status: Database["public"]["Enums"]["shipment_status"]
+          p_tracking_url: string
+        }
+        Returns: Database["public"]["Enums"]["booking_status"]
+      }
+      admin_set_booking_status: {
+        Args: {
+          p_booking_code: string
+          p_status: Database["public"]["Enums"]["booking_status"]
+        }
+        Returns: Database["public"]["Enums"]["booking_status"]
+      }
       create_booking: {
         Args: {
           p_aadhaar_number: string
@@ -396,6 +564,35 @@ export type Database = {
           booking_code: string
           session_name: string
         }[]
+      }
+      ingest_news_item: {
+        Args: {
+          p_category: Database["public"]["Enums"]["news_category"]
+          p_source_id: string
+          p_source_name: string
+          p_source_published_at: string
+          p_source_summary: string
+          p_source_title: string
+          p_source_url: string
+        }
+        Returns: Json
+      }
+      save_news_draft: {
+        Args: {
+          p_ai_model: string
+          p_article_id: string
+          p_body: string
+          p_category: string
+          p_keywords: string[]
+          p_meta_description: string
+          p_meta_title: string
+          p_relevant: boolean
+          p_slug: string
+          p_summary: string
+          p_tags: string[]
+          p_title: string
+        }
+        Returns: Json
       }
       submit_payment_proof: {
         Args: {
@@ -431,6 +628,22 @@ export type Database = {
         | "with_customer"
         | "maintenance"
         | "retired"
+      news_category:
+        | "dgca_updates"
+        | "dgca_exam_updates"
+        | "aviation_industry"
+        | "pilot_news"
+        | "regulations"
+        | "aviation_training"
+        | "defence_aviation"
+        | "interesting_stories"
+      news_status:
+        | "detected"
+        | "draft"
+        | "review"
+        | "approved"
+        | "published"
+        | "rejected"
       payment_method: "upi" | "razorpay"
       payment_status:
         | "awaiting_payment"

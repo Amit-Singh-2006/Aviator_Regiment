@@ -42,6 +42,27 @@ Before pushing, run `npm run lint`, `npm run typecheck` and `npm run build`.
 
 Bookings, payments, CX-3 units, shipments, exam sessions and prices live in
 Supabase. The schema is versioned in `src/db/migrations`; after changing it,
-regenerate `src/db/database.types.ts`. Admin accounts are added by inserting the
-user's id into `public.admin_users` from the Supabase dashboard. Pre-filled
-WhatsApp messages live in `src/lib/whatsapp`.
+regenerate `src/db/database.types.ts`. Pre-filled WhatsApp messages live in
+`src/lib/whatsapp`.
+
+## Admin console
+
+`/admin` is the operations console: verify UPI payments, assign CX-3 units,
+record delivery and return couriers, close bookings, manage exam sessions,
+prices and units, and review aviation news before it is published. Admins sign
+in with Supabase Auth (email and password). To add an admin, create the user in
+Supabase (Authentication → Users), then insert their user id into
+`public.admin_users`. Every admin action runs as that user, so row level
+security applies, and it is recorded in `public.audit_log` (the Activity page).
+
+## Automations (n8n)
+
+Two n8n workflows run alongside the site:
+
+- **Aviation News: Collect and Draft** reads the active `news_sources` feeds every
+  3 hours, registers new stories (`ingest_news_item`), writes an AI draft for each
+  (`save_news_draft`) and emails the admins. Nothing is published automatically.
+- **Booking Alerts: Email Admins** receives a webhook from the database (pg_net
+  trigger on `audit_log`) when a booking is created or a payment screenshot is
+  uploaded, and emails the admins. The webhook URL is stored in
+  `private.app_settings`.
