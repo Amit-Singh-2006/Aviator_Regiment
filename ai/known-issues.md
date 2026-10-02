@@ -73,6 +73,7 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
 | KI-47 | `submit_payment_proof` parameter named `p_phone` accepts email | Low | Open |
 | KI-48 | Careers links can go stale; no link checker | Low | Open |
 | KI-49 | End-to-end tests live outside the repo | Medium | Open |
+| KI-50 | The GitHub repository is public | Medium | Open (needs decision) |
 
 ---
 
@@ -169,9 +170,8 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
 ### KI-20 · Automated tests and CI (partly resolved)
 - **Severity:** Medium.
 - **Done (VERIFIED):** Vitest with 20 unit tests (validation, booking IDs, the Markdown renderer including XSS cases, news and careers helpers), and a GitHub Actions CI workflow.
-- **Still open:**
-  - There are no integration or end-to-end tests in the repo (see KI-49).
-  - CI has never run on GitHub: no Actions run had been observed at the time of writing (UNKNOWN until the first push runs).
+- **Also done:** the first GitHub Actions run passed on `374e78d` (2026-10-02).
+- **Still open:** there are no integration or end-to-end tests in the repo (see KI-49).
 
 ### KI-21 · `npm audit` PostCSS advisory
 - **Severity:** Medium (assessed as low exploitability).
@@ -294,6 +294,13 @@ These issues were first audited on 2026-10-02 and re-checked the same day, after
 - **Severity:** Medium.
 - **Evidence:** VERIFIED: `admin-flow.mjs`, `live-booking.mjs` and `release-check.mjs` are in the AI session's temporary folder. They need `puppeteer-core`, a local Chrome and the secret key, and they write to the only database.
 - **Recommended next step:** move them into `tests/e2e` once a staging database exists (KI-06).
+
+### KI-50 · The GitHub repository is public
+- **Severity:** Medium.
+- **Evidence:** VERIFIED: `api.github.com/repos/Amit-Singh-2006/Aviator_Regiment` answered without authentication on 2026-10-02.
+- **What this exposes:** the full source, the SQL schema and RLS policies, the n8n booking-webhook URL (migration 0002; protected by the secret header since migration 0006), the Supabase project ref, and the admin email addresses in `ai/` docs and commit metadata. No secrets were found in tracked files; the staged diff was scanned before the push.
+- **Possible impact:** attackers can study the code paths, and the client's business logic is public.
+- **Recommended next step:** decide with the client whether the repo should be private. Either way, never commit secrets, the client spec or n8n exports.
 
 ## Resolved issues (history)
 

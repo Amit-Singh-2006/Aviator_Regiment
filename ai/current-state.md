@@ -217,7 +217,7 @@ When limited, the endpoints return 429 with `Retry-After: 600`. If the rate-limi
 | WhatsApp | `wa.me` links to **+91 82769 16762** (918276916762); community button → `https://chat.whatsapp.com/GNoTiftyW20G54WwqP7p6S` |
 | UPI | ID **8264742088@mbk**. The QR (`/images/upi-qr.png`) decodes to `upi://pay?pa=8264742088@mbk&pn=Tahasen Rahman`, so the payee name in UPI apps differs from the site label "Aviator's Regiment". |
 | Vercel | **UNKNOWN**: the connector returned 403 and no teams are visible |
-| GitHub | `origin` = `github.com/Amit-Singh-2006/Aviator_Regiment`; `main` is pushed; visibility UNKNOWN |
+| GitHub | `origin` = `github.com/Amit-Singh-2006/Aviator_Regiment`, **public** (the GitHub API answered without auth on 2026-10-02). `main` is pushed, and the first CI run passed on `374e78d`. |
 | Razorpay | Not implemented |
 
 ## 11. Environment and configuration

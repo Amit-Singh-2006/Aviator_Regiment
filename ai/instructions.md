@@ -20,6 +20,7 @@ This file was written from a read-only audit of `v1-build` @ `385b718` on 2026-1
 - **Domain.** None is owned yet. `siteConfig.url` defaults to `https://aviatorsregiment.com`. Don't treat that as live.
 - **There is exactly one Supabase project, and local `.env.local` points at it.** Any local run, script, test or migration acts on the **production database**. [Convention: VERIFIED fact] [Recommended: treat every DB action as production.]
 - **Branches.** `v1-build` was merged into `main` and `main` was pushed on 2026-10-02. Work from `main`, or from a feature branch off it.
+- **The GitHub repository is public** (KI-50). Anything committed is visible to everyone. Never commit secrets, `.env.local` values, the client's private spec, or n8n workflow exports.
 - **Business details (set 2026-10-02):** WhatsApp **+91 82769 16762**, WhatsApp group link, UPI ID **8264742088@mbk**, QR at `public/images/upi-qr.png`, couriers **Delhivery, DTDC, Rapido, Uber**. The UPI ID is registered to "Tahasen Rahman" (KI-43).
 
 ## 2. Actions that require explicit user approval [Recommended]
